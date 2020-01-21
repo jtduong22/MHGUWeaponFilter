@@ -35,7 +35,7 @@ for key in parameters.keys():
 
 is_order = True
 is_desc = True
-order_by = 'element_ranged'
+order_by = 'element'
 order_string = ''
 
 if is_order:
@@ -45,8 +45,8 @@ if is_order:
 
 
 # generate entire command
-command = f"select {show_string} from items, palico_weapons where items._id = palico_weapons._id and palico_weapons.element='Paralysis' {order_string}"
-
+command = f"select {show_string} from items, palico_weapons where items._id = palico_weapons._id and palico_weapons.element <> '' {order_string}"
+print(command)
 # execute command and retrieve all weapons that meet parameter
 cursor = conn.execute(command)
 
@@ -66,3 +66,4 @@ for row in cursor:
         print_formatted(text, pad)
 
     print()
+
