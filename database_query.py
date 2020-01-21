@@ -53,7 +53,7 @@ class weapon_db:
         # if type in self.headers:
         #     self.results_order = f'order by {type} desc, name asc'
 
-    def execute(self, is_print_enabled=True) -> None:
+    def execute(self, is_print_enabled=True) -> list:
         command = f"select items.name{self.displayed_options} "
         command += f"from items, palico_weapons where items._id = palico_weapons._id  {self.additional_filters}"
         command += f" {self.results_order}"
@@ -62,7 +62,8 @@ class weapon_db:
 
         cursor = self.db.execute(command)
 
-        self.print_results(cursor)
+        # self.print_results(cursor)
+        return list(cursor.fetchall())
 
     def print_results(self, cursor:sql.Cursor) -> None:
         # temporary function that takes string and int and adds padding to the end

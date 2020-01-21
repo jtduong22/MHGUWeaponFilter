@@ -24,7 +24,7 @@ class MHDatabaseWindow(QMainWindow):
     def __init__(self):
         # initialize main window
         QMainWindow.__init__(self)
-        self.setMinimumSize(640,400)
+        self.setMinimumSize(1200,400)
         self.setWindowTitle("MHGU Weapon DB")
 
         # initialize main
@@ -62,6 +62,11 @@ class MHDatabaseWindow(QMainWindow):
         self.element_layout_combobox = element_layout.itemAt(1).widget()
         self.sharpness_layout_combobox = sharpness_layout.itemAt(1).widget()
         self.order_layout_combobox = order_layout.itemAt(1).widget()
+
+        # add table
+        self.weapon_table = QTableWidget(self)
+
+        test_layout.addWidget(self.weapon_table)
 
         # create read all actions button
         read_button = QPushButton("Read all")
@@ -109,7 +114,29 @@ class MHDatabaseWindow(QMainWindow):
         db.add_sharpness_filter(s_type_selection)
         db.order_results_by(o_type_selection)
 
-        db.execute()
+        results = db.execute()
+        print(results)
+
+        self.fill_table(results)
+        print(self.size())
+
+    def fill_table(self, results: list) -> None:
+        row_size = len(results[0])
+        column_size = len(results)
+        headers = db_constants.ORDER_BY_TYPES.keys()
+
+        self.weapon_table.setColumnCount(row_size)
+        self.weapon_table.setRowCount(column_size)
+        self.weapon_table.setHorizontalHeaderLabels(headers)
+
+        for x_count, row in enumerate(results):
+            for y_count, column in enumerate(row):
+                item = QTableWidgetItem(str(column))
+                self.weapon_table.setItem(x_count, y_count, item)
+                # print(x_count, row)
+                # print(y_count, column)
+
+        self.weapon_table.resizeColumnsToContents()
 
 
 if __name__ == '__main__':
