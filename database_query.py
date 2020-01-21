@@ -30,15 +30,15 @@ class weapon_db:
 
     def add_damage_type_filter(self, type:int) -> None:
         if type > 0:
-            self.additional_filters += f'and palico_weapons.blunt={type} '
+            self.additional_filters += f'and palico_weapons.blunt={type-1} '
 
     def add_balance_type_filter(self, type:int) -> None:
         if type > 0:
-            self.additional_filters += f'and palico_weapons.balance={type} '
+            self.additional_filters += f'and palico_weapons.balance={type-1} '
 
     def add_element_type_filter(self, type:int) -> None:
         if type > 0:
-            self.additional_filters += f'and palico_weapons.balance={db_constants.ELEMENT_TYPES[type]} '
+            self.additional_filters += f"and palico_weapons.element='{db_constants.ELEMENT_TYPES[type].capitalize()}' "
         # if type.lower() != 'any':
         #     self.additional_filters += f"and palico_weapons.element='{type}'"
 
