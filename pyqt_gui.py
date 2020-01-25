@@ -5,21 +5,6 @@ from PyQt5.QtCore import *
 
 from database_query import *
 
-class HelloWindow(QMainWindow):
-    def __init__(self):
-        QMainWindow.__init__(self)
-
-        self.setWindowTitle("Testing gui")
-
-        centralWidget = QWidget(self)
-        self.setCentralWidget(centralWidget)
-
-        gridLayout = QGridLayout(self)
-        centralWidget.setLayout(gridLayout)
-
-        title = QLabel("Hello World", self)
-        gridLayout.addWidget(title,0,0)
-
 class MHDatabaseWindow(QMainWindow):
     def __init__(self):
         # initialize main window
@@ -69,8 +54,8 @@ class MHDatabaseWindow(QMainWindow):
         test_layout.addWidget(self.weapon_table)
 
         # create read all actions button
-        read_button = QPushButton("Read all")
-        read_button.clicked.connect(self.read_all)
+        read_button = QPushButton("Search")
+        read_button.clicked.connect(self.search)
         test_layout.addWidget(read_button, alignment=Qt.AlignBottom)
 
         # create close button
@@ -80,7 +65,6 @@ class MHDatabaseWindow(QMainWindow):
 
     def create_combobox_label(self, label_text:str, drop_content: list) -> QLayout:
         layout = QHBoxLayout(self)
-
         label = QLabel(label_text, self)
         label.setAlignment(Qt.AlignRight)
 
@@ -92,56 +76,70 @@ class MHDatabaseWindow(QMainWindow):
 
         return layout
 
-    def read_all(self):
-        d_type_selection = self.damage_type_combobox.currentIndex()
-        b_type_selection = self.balance_layout_combobox.currentIndex()
-        e_type_selection = self.element_layout_combobox.currentIndex()
-        s_type_selection = self.sharpness_layout_combobox.currentIndex()
-        o_type_selection = self.order_layout_combobox.currentIndex()
-
-        print(d_type_selection)
-        print(b_type_selection)
-        print(e_type_selection)
-        print(s_type_selection)
-        print(o_type_selection)
-        print()
-
+    # search database for results
+    def search(self) -> None:
+        # open database
         location = './Data/mhgu.db'
         db = weapon_db(location)
+
+        # apply selected filters to database
+        self.get_selected_options(db)
+
+        # retrieve results
+        headers, results = db.execute()
+
+        # fill table
+        self.fill_table(headers, results)
+
+    # read selected options and applies to database
+    def get_selected_options(self, db: weapon_db) -> None:
+        # read selected option of all the comboboxes
+        d_type_selection = self.damage_type_combobox.currentIndex()  # damage type: any, cutting, blunt
+        b_type_selection = self.balance_layout_combobox.currentIndex()  # balance type: any, balanced, melee, boomerang
+        e_type_selection = self.element_layout_combobox.currentIndex()  # element type: any, fire, water, thunder, ice, dragon, poison, sleep, paralysis, blastblight
+        s_type_selection = self.sharpness_layout_combobox.currentIndex()  # sharpness type: any, red, yellow, green, blue, white, purple
+        o_type_selection = self.order_layout_combobox.currentIndex()  # order by type: name, rarity, attack (melee), attack (ranged), element, sharpness, affinity (melee), affinty (ranged), blunt, balance type
+
+        # add filters to database
         db.add_damage_type_filter(d_type_selection)
         db.add_balance_type_filter(b_type_selection)
         db.add_element_type_filter(e_type_selection)
         db.add_sharpness_filter(s_type_selection)
         db.order_results_by(o_type_selection)
 
-        results = db.execute()
-        print(results)
+    # populate table with results from database query
+    def fill_table(self, displayed: dict, results: list) -> None:
 
-        self.fill_table(results)
-        print(self.size())
+        # select only data enabled for viewing
+        headers = [x for x in displayed.keys() if displayed[x] == True]
+        data = [x for x,y in enumerate(displayed.keys()) if displayed[y] == True]   # creates list of indexes of displayed features to cycle through
 
-    def fill_table(self, results: list) -> None:
-        row_size = len(results[0])
-        column_size = len(results)
-        headers = db_constants.ORDER_BY_TYPES.keys()
+        # get size of table
+        column_count = len(data)
+        row_count = len(results[0])
 
-        self.weapon_table.setColumnCount(row_size)
-        self.weapon_table.setRowCount(column_size)
+        # set table size
+        self.weapon_table.setColumnCount(column_count)
+        self.weapon_table.setRowCount(row_count)
+
+        # set headers
         self.weapon_table.setHorizontalHeaderLabels(headers)
 
-        for x_count, row in enumerate(results):
-            for y_count, column in enumerate(row):
-                item = QTableWidgetItem(str(column))
+        # cycle through each row
+        for x_count, row in enumerate(results):                 # note: enumerate returns a tuple with the index number followed by the content, ie (0, [content])
+            for y_count, column in enumerate(data):
+                # add column to the table (table only accepts strings)
+                text = str(row[column])
+                item = QTableWidgetItem(text)
+
+                # add to table at position x,y
                 self.weapon_table.setItem(x_count, y_count, item)
-                # print(x_count, row)
-                # print(y_count, column)
 
         self.weapon_table.resizeColumnsToContents()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    # mainWin = HelloWindow()
     mainWin = MHDatabaseWindow()
     mainWin.show()
 

@@ -1,5 +1,6 @@
 import _sqlite3 as sql
 
+# container class that contains constants used in program
 class db_constants():
     list_to_index_converter = lambda my_list: {x: y - 1 for x, y in zip(my_list, range(len(my_list)))}
 
@@ -15,56 +16,67 @@ class db_constants():
     SHARPNESS_TYPES = ["any", "red", "yellow", "green", "blue", "white", "purple"]
     SHA_TO_INDEX = list_to_index_converter(SHARPNESS_TYPES)
 
-    ORDER_BY_TYPES = {'name': 'name', 'attack (melee)': 'attack_melee', 'attack (ranged)': 'attack_ranged',
+    ORDER_BY_TYPES = {'name': 'name', 'rarity':'rarity', 'attack (melee)': 'attack_melee', 'attack (ranged)': 'attack_ranged',
                       'element': 'element', 'element (melee)': 'element_melee', 'element (ranged)': 'element_ranged',
                       'defense': 'defense', 'sharpness': 'sharpness', 'affinity melee': 'affinity_melee',
-                      'affinity ranged': 'affinity_ranged', 'balance type': 'balance', 'blunt': 'blunt'}
+                      'affinity ranged': 'affinity_ranged', 'blunt': 'blunt', 'balance type': 'balance'}
 
+# wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
 class weapon_db:
     def __init__(self, db_location:str):
         self.db = sql.connect(db_location)
         self.displayed_options = ', palico_weapons.attack_melee, palico_weapons.attack_ranged, palico_weapons.element, palico_weapons.element_melee, palico_weapons.element_ranged, palico_weapons.defense, palico_weapons.sharpness, palico_weapons.affinity_melee, palico_weapons.affinity_ranged, palico_weapons.blunt, palico_weapons.balance'
         self.additional_filters = ''
         self.results_order = 'order by items.name '
-        self.headers = ['attack_melee', 'attack_ranged', 'element', 'element_melee', 'element_ranged', 'defense', 'sharpness', 'affinity_melee', 'affinity_ranged', 'blunt', 'balance']
 
+    # adds filter for damage type (cutting, blunt)
     def add_damage_type_filter(self, type:int) -> None:
         if type > 0:
             self.additional_filters += f'and palico_weapons.blunt={type-1} '
 
+    # adds filter for balance type (balanced, melee, boomerang)
     def add_balance_type_filter(self, type:int) -> None:
         if type > 0:
             self.additional_filters += f'and palico_weapons.balance={type-1} '
 
+    # adds filter for element type (fire, water, thunder, ice, dragon, poison, sleep, paralysis, blastblight)
     def add_element_type_filter(self, type:int) -> None:
         if type > 0:
             self.additional_filters += f"and palico_weapons.element='{db_constants.ELEMENT_TYPES[type].capitalize()}' "
-        # if type.lower() != 'any':
-        #     self.additional_filters += f"and palico_weapons.element='{type}'"
 
+    # adds filter for sharpness type (red, yellow, green, blue, white, purple)
     def add_sharpness_filter(self, type:int):
         if type > 0:
             self.additional_filters += f"and palico_weapons.sharpness={type} "
 
+    # order results by specified column (name, rarity, attack (melee), attack (ranged), element, sharpness, affinity (melee), affinty (ranged), blunt, balance type)
+    # ordered by name by default
     def order_results_by(self, type:int) -> None:
         if type > 0:
             key = list(db_constants.ORDER_BY_TYPES.keys())[type]
             self.results_order = f'order by {db_constants.ORDER_BY_TYPES[key]} desc, name asc'
-        # if type in self.headers:
-        #     self.results_order = f'order by {type} desc, name asc'
 
-    def execute(self, is_print_enabled=True) -> list:
-        command = f"select items.name{self.displayed_options} "
+    # gets results from database
+    def execute(self) -> list:
+        # adds selected options
+        command = f"select items.name, items.rarity{self.displayed_options} "
         command += f"from items, palico_weapons where items._id = palico_weapons._id  {self.additional_filters}"
         command += f" {self.results_order}"
 
         print(f"\n{command}")
 
+        # execute and retrieve results from sql command
         cursor = self.db.execute(command)
+        results = list(cursor.fetchall())
 
-        # self.print_results(cursor)
-        return list(cursor.fetchall())
+        # choose displayed options
+        displayed_settings = {x:True for x in db_constants.ORDER_BY_TYPES.keys()}
+        displayed_settings['rarity'] = False # for testing purposes
 
+        # return results
+        return displayed_settings, results
+
+    # prints results into command line
     def print_results(self, cursor:sql.Cursor) -> None:
         # temporary function that takes string and int and adds padding to the end
         print_formatted = lambda text, space: (print(f"{text.center(max(space, len(text)))}", end=" | "))
