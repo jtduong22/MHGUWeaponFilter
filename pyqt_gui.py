@@ -20,6 +20,12 @@ class MHDatabaseWindow(QMainWindow):
         test_layout = QVBoxLayout(self)
         test_widget.setLayout(test_layout)
 
+        # create settings button
+        displayed_settings_button = QPushButton("Settings", self)
+        displayed_settings_button.clicked.connect(self.create_settings_dialog)
+        test_layout.addWidget(displayed_settings_button, alignment=Qt.AlignRight)
+
+
         label = QLabel("MHGU Filter", self)
         label.setAlignment(Qt.AlignHCenter)
         test_layout.addWidget(label)
@@ -62,6 +68,43 @@ class MHDatabaseWindow(QMainWindow):
         quit_button.clicked.connect(self.close)
         test_layout.addWidget(quit_button, alignment=Qt.AlignBottom)
 
+    # initializes the settings dialog
+    def create_settings_dialog(self) -> None:
+        # create a new dialog
+        layout = QVBoxLayout(self)
+        dialog = QDialog(self)
+        dialog.setLayout(layout)
+
+        # create description at the top
+        description_label = QLabel("Choose which options to display / hide", self)
+        layout.addWidget(description_label)
+
+        # create new layout for checkmarks
+        checkbox_layout = QGridLayout(self)
+
+        # create checkboxes for each selectable option
+        # default row size is 3
+        row_size = 3
+        for count, key in enumerate(db_constants.ORDER_BY_TYPES.keys()):
+            # get position of item
+            x = count % 3
+            y = count // 3
+
+            # create checkbox
+            checkbox = QCheckBox(key, self)
+            checkbox.setChecked(True)
+            checkbox_layout.addWidget(checkbox,y,x)
+
+        layout.addLayout(checkbox_layout)
+
+        # add close button
+        close_button = QPushButton("Close", self)
+        close_button.clicked.connect(dialog.close)
+        layout.addWidget(close_button)
+
+        dialog.exec_()
+
+    # quickly create combobox with label next to it
     def create_combobox_label(self, label_text:str, drop_content: list) -> QLayout:
         layout = QHBoxLayout(self)
         label = QLabel(label_text, self)
