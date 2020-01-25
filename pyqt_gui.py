@@ -50,7 +50,6 @@ class MHDatabaseWindow(QMainWindow):
 
         # add table
         self.weapon_table = QTableWidget(self)
-
         test_layout.addWidget(self.weapon_table)
 
         # create read all actions button
