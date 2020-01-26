@@ -12,7 +12,7 @@ An application written in Python that filters and displays the weapons of Monste
 Change the directory to folder and run `python3 pyqt_gui.py`
 
 ## To Do
-* add interface for hiding / showing specific table columns
+~~* add interface for hiding / showing specific table columns~~
 * add support for other weapons besides Palico weapons 
 * clean up GUI more user friendly by adding icons + replacing numbers with corresponding text 
 
