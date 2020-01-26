@@ -25,6 +25,7 @@ class MHDatabaseWindow(QMainWindow):
         displayed_settings_button.clicked.connect(self.create_settings_dialog)
         test_layout.addWidget(displayed_settings_button, alignment=Qt.AlignRight)
 
+        self.enabled_settings = {x:True for x in db_constants.ORDER_BY_TYPES.keys()}
 
         label = QLabel("MHGU Filter", self)
         label.setAlignment(Qt.AlignHCenter)
@@ -85,14 +86,15 @@ class MHDatabaseWindow(QMainWindow):
         # create checkboxes for each selectable option
         # default row size is 3
         row_size = 3
-        for count, key in enumerate(db_constants.ORDER_BY_TYPES.keys()):
+        for count, key in enumerate(self.enabled_settings.keys()):
             # get position of item
             x = count % 3
             y = count // 3
 
             # create checkbox
             checkbox = QCheckBox(key, self)
-            checkbox.setChecked(True)
+            checkbox.setChecked(self.enabled_settings[key])
+            checkbox.clicked.connect(self.option_selected)
             checkbox_layout.addWidget(checkbox,y,x)
 
         layout.addLayout(checkbox_layout)
@@ -102,7 +104,18 @@ class MHDatabaseWindow(QMainWindow):
         close_button.clicked.connect(dialog.close)
         layout.addWidget(close_button)
 
+        # show dialog
         dialog.exec_()
+
+    # callback when option is selected, changes the settings
+    def option_selected(self) -> None:
+        # get information about which checkbox
+        checkbox = self.sender()
+        option = checkbox.text()
+        is_enabled = checkbox.isChecked()
+
+        # change settings
+        self.enabled_settings[option] = is_enabled
 
     # quickly create combobox with label next to it
     def create_combobox_label(self, label_text:str, drop_content: list) -> QLayout:
@@ -128,10 +141,10 @@ class MHDatabaseWindow(QMainWindow):
         self.get_selected_options(db)
 
         # retrieve results
-        headers, results = db.execute()
+        results = db.execute()
 
         # fill table
-        self.fill_table(headers, results)
+        self.fill_table(self.enabled_settings, results)
 
     # read selected options and applies to database
     def get_selected_options(self, db: weapon_db) -> None:
@@ -158,7 +171,7 @@ class MHDatabaseWindow(QMainWindow):
 
         # get size of table
         column_count = len(data)
-        row_count = len(results[0])
+        row_count = len(results)
 
         # set table size
         self.weapon_table.setColumnCount(column_count)

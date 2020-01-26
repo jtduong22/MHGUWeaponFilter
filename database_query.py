@@ -28,7 +28,6 @@ class weapon_db:
         self.displayed_options = ', palico_weapons.attack_melee, palico_weapons.attack_ranged, palico_weapons.element, palico_weapons.element_melee, palico_weapons.element_ranged, palico_weapons.defense, palico_weapons.sharpness, palico_weapons.affinity_melee, palico_weapons.affinity_ranged, palico_weapons.blunt, palico_weapons.balance'
         self.additional_filters = ''
         self.results_order = 'order by items.name '
-        self.enabled_options = {x: True for x in db_constants.ORDER_BY_TYPES.keys()}
 
     # adds filter for damage type (cutting, blunt)
     def add_damage_type_filter(self, type:int) -> None:
@@ -71,7 +70,7 @@ class weapon_db:
         results = list(cursor.fetchall())
 
         # return results
-        return self.enabled_options, results
+        return results
 
     # prints results into command line
     def print_results(self, cursor:sql.Cursor) -> None:
