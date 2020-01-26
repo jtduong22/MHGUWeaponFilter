@@ -14,7 +14,7 @@ Change the directory to folder and run `python3 pyqt_gui.py`
 ## To Do
 * ~~add interface for hiding / showing specific table columns~~
 * add support for other weapons besides Palico weapons 
-* clean up GUI more user friendly by adding icons + replacing numbers with corresponding text 
+* ~~clean up GUI more user friendly by adding icons + replacing numbers with corresponding text~~ 
 
 ## Acknowledgements
 GatheringHallStudios - Database was used from their [MHGenDatabase](https://github.com/gatheringhallstudios/MHGenDatabase/) project. 
