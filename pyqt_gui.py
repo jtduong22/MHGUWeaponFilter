@@ -25,12 +25,13 @@ class MHDatabaseWindow(QMainWindow):
     def __init__(self):
         # initialize main window
         QMainWindow.__init__(self)
-        self.setMinimumSize(1200,400)
+        self.setMinimumSize(1250,400)
         self.setWindowTitle("MHGU Weapon DB")
 
         # initialize main
         test_widget = QWidget(self)
         self.setCentralWidget(test_widget)
+        test_widget.adjustSize()
 
         # create layout? (required for alignment to work)
         test_layout = QVBoxLayout(self)
@@ -160,6 +161,7 @@ class MHDatabaseWindow(QMainWindow):
         # fill table
         self.fill_table(self.enabled_settings, results)
 
+
     # read selected options and applies to database
     def get_selected_options(self, db: weapon_db) -> None:
         # read selected option of all the comboboxes
@@ -205,9 +207,6 @@ class MHDatabaseWindow(QMainWindow):
                 self.weapon_table.setItem(x_count, y_count, item)
 
         self.weapon_table.resizeColumnsToContents()
-        self.setMinimumWidth(self.weapon_table.size().width()+75)
-
-        print(self.weapon_table.size().width())
 
     def parse_table_item(self, item_type:str, item_index: int):
         cell = QTableWidgetItem()
