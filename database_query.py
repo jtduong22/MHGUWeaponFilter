@@ -18,8 +18,8 @@ class db_constants():
 
     ORDER_BY_TYPES = {'name': 'name', 'rarity':'rarity', 'attack (melee)': 'attack_melee', 'attack (ranged)': 'attack_ranged',
                       'element': 'element', 'element (melee)': 'element_melee', 'element (ranged)': 'element_ranged',
-                      'defense': 'defense', 'sharpness': 'sharpness', 'affinity melee': 'affinity_melee',
-                      'affinity ranged': 'affinity_ranged', 'blunt': 'blunt', 'balance type': 'balance'}
+                      'defense': 'defense', 'sharpness': 'sharpness', 'affinity (melee)': 'affinity_melee',
+                      'affinity (ranged)': 'affinity_ranged', 'blunt': 'blunt', 'balance type': 'balance'}
 
 # wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
 class weapon_db:

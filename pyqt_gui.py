@@ -184,14 +184,26 @@ class MHDatabaseWindow(QMainWindow):
         for x_count, row in enumerate(results):                 # note: enumerate returns a tuple with the index number followed by the content, ie (0, [content])
             for y_count, column in enumerate(data):
                 # add column to the table (table only accepts strings)
-                text = str(row[column])
+                text = self.parse_table_item(headers[y_count], row[column])
                 item = QTableWidgetItem(text)
 
                 # add to table at position x,y
                 self.weapon_table.setItem(x_count, y_count, item)
 
         self.weapon_table.resizeColumnsToContents()
+        self.setMinimumWidth(self.weapon_table.size().width()+75)
 
+        print(self.weapon_table.size().width())
+
+    def parse_table_item(self, item_type:str, item_index: int) -> str:
+        if item_type == 'sharpness':
+            item_index = db_constants.SHARPNESS_TYPES[item_index]
+        elif item_type == 'blunt':
+            item_index = db_constants.DAMAGE_TYPES[item_index + 1]
+        elif item_type == 'balance type':
+            item_index = db_constants.BALANCE_TYPES[item_index + 1]
+
+        return str(item_index)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
