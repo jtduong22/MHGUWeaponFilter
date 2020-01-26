@@ -14,6 +14,7 @@ class db_constants():
     ELEMENT_TYPES = ["any", "fire", "water", "thunder", "ice", "dragon", "poison", "sleep", "paralysis", "blastblight"]
 
     SHARPNESS_TYPES = ["any", "red", "yellow", "green", "blue", "white", "purple"]
+    SHARPNESS_TO_RGB = {x:y for x,y in zip(SHARPNESS_TYPES, [[0,0,0], [200, 0, 0], [200, 200, 0], [0, 200, 0], [0, 0, 200], [200, 200, 200], [200, 0, 200]])}
     SHA_TO_INDEX = list_to_index_converter(SHARPNESS_TYPES)
 
     ORDER_BY_TYPES = {'name': 'name', 'rarity':'rarity', 'attack (melee)': 'attack_melee', 'attack (ranged)': 'attack_ranged',

@@ -6,6 +6,22 @@ from PyQt5.QtCore import *
 from database_query import *
 
 class MHDatabaseWindow(QMainWindow):
+#### Class Constants ####
+    IMAGE_LOCATION = './Images/'
+
+#### Class variables ####
+    enabled_settings = {x:True for x in db_constants.ORDER_BY_TYPES.keys()}
+
+    damage_type_combobox = None
+    balance_layout_combobox = None
+    element_layout_combobox = None
+    sharpness_layout_combobox = None
+    order_layout_combobox = None
+
+    weapon_table = None
+
+#### Class Methods ####
+
     def __init__(self):
         # initialize main window
         QMainWindow.__init__(self)
@@ -24,8 +40,6 @@ class MHDatabaseWindow(QMainWindow):
         displayed_settings_button = QPushButton("Settings", self)
         displayed_settings_button.clicked.connect(self.create_settings_dialog)
         test_layout.addWidget(displayed_settings_button, alignment=Qt.AlignRight)
-
-        self.enabled_settings = {x:True for x in db_constants.ORDER_BY_TYPES.keys()}
 
         label = QLabel("MHGU Filter", self)
         label.setAlignment(Qt.AlignHCenter)
@@ -183,11 +197,11 @@ class MHDatabaseWindow(QMainWindow):
         # cycle through each row
         for x_count, row in enumerate(results):                 # note: enumerate returns a tuple with the index number followed by the content, ie (0, [content])
             for y_count, column in enumerate(data):
-                # add column to the table (table only accepts strings)
-                text = self.parse_table_item(headers[y_count], row[column])
-                item = QTableWidgetItem(text)
 
-                # add to table at position x,y
+                # add info to the cell
+                item = self.parse_table_item(headers[y_count], row[column])
+
+                # add cell to table at position x,y
                 self.weapon_table.setItem(x_count, y_count, item)
 
         self.weapon_table.resizeColumnsToContents()
@@ -195,15 +209,42 @@ class MHDatabaseWindow(QMainWindow):
 
         print(self.weapon_table.size().width())
 
-    def parse_table_item(self, item_type:str, item_index: int) -> str:
-        if item_type == 'sharpness':
-            item_index = db_constants.SHARPNESS_TYPES[item_index]
-        elif item_type == 'blunt':
-            item_index = db_constants.DAMAGE_TYPES[item_index + 1]
-        elif item_type == 'balance type':
-            item_index = db_constants.BALANCE_TYPES[item_index + 1]
+    def parse_table_item(self, item_type:str, item_index: int):
+        cell = QTableWidgetItem()
 
-        return str(item_index)
+        # change background color to match sharpness
+        if item_type == 'sharpness':
+            sharpness_type = db_constants.SHARPNESS_TYPES[item_index]   # get sharpness type
+            color = db_constants.SHARPNESS_TO_RGB[sharpness_type]       # get RGB color
+            cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
+
+        # add icon to cell
+        elif item_type == 'element':
+            picture_location = self.IMAGE_LOCATION + item_index.lower() + '.png'
+            icon = QIcon(picture_location)
+            cell.setIcon(icon)
+
+        # is text, parse accordingly to make visually clearer
+        else:
+            text = item_index
+
+            # replace number with 'cutting' or 'blunt'
+            if item_type == 'blunt':
+                text = db_constants.DAMAGE_TYPES[item_index + 1]
+
+            # replace number with 'balanced', 'melee', or 'boomerang
+            elif item_type == 'balance type':
+                text = db_constants.BALANCE_TYPES[item_index + 1]
+
+            # align all the numbers to the right side
+            elif item_type != 'name':
+                cell.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+            # apply text
+            cell.setText(str(text))
+
+        return  cell
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
