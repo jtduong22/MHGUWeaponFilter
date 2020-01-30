@@ -150,7 +150,7 @@ class MHDatabaseWindow(QMainWindow):
     def search(self) -> None:
         # open database
         location = './Data/mhgu.db'
-        db = weapon_db(location)
+        db = palico_weapon(location, 'palico_weapons', [db_constants.ORDER_BY_TYPES[x] for x in db_constants.ORDER_BY_TYPES.keys()])
 
         # apply selected filters to database
         self.get_selected_options(db)

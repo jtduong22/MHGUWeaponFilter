@@ -24,31 +24,12 @@ class db_constants():
 
 # wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
 class weapon_db:
-    def __init__(self, db_location:str):
+    def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list):
         self.db = sql.connect(db_location)
-        self.displayed_options = ', palico_weapons.attack_melee, palico_weapons.attack_ranged, palico_weapons.element, palico_weapons.element_melee, palico_weapons.element_ranged, palico_weapons.defense, palico_weapons.sharpness, palico_weapons.affinity_melee, palico_weapons.affinity_ranged, palico_weapons.blunt, palico_weapons.balance'
+        self.weapon_table = weapon_table
+        self.displayed_options = columns_to_retrieve
         self.additional_filters = ''
         self.results_order = 'order by items.name '
-
-    # adds filter for damage type (cutting, blunt)
-    def add_damage_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f'and palico_weapons.blunt={type-1} '
-
-    # adds filter for balance type (balanced, melee, boomerang)
-    def add_balance_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f'and palico_weapons.balance={type-1} '
-
-    # adds filter for element type (fire, water, thunder, ice, dragon, poison, sleep, paralysis, blastblight)
-    def add_element_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f"and palico_weapons.element='{db_constants.ELEMENT_TYPES[type].capitalize()}' "
-
-    # adds filter for sharpness type (red, yellow, green, blue, white, purple)
-    def add_sharpness_filter(self, type:int):
-        if type > 0:
-            self.additional_filters += f"and palico_weapons.sharpness={type} "
 
     # order results by specified column (name, rarity, attack (melee), attack (ranged), element, sharpness, affinity (melee), affinty (ranged), blunt, balance type)
     # ordered by name by default
@@ -60,8 +41,8 @@ class weapon_db:
     # gets results from database
     def execute(self) -> list:
         # adds selected options
-        command = f"select items.name, items.rarity{self.displayed_options} "
-        command += f"from items, palico_weapons where items._id = palico_weapons._id  {self.additional_filters}"
+        command = f"select {', '.join(self.displayed_options)} "
+        command += f"from items, {self.weapon_table} where items._id = {self.weapon_table}._id  {self.additional_filters}"
         command += f" {self.results_order}"
 
         print(f"\n{command}")
@@ -95,6 +76,31 @@ class weapon_db:
                 print_formatted(text, pad)
 
             print()
+
+class palico_weapon(weapon_db):
+    def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list):
+        weapon_db.__init__(self, db_location, weapon_table, columns_to_retrieve)
+
+    # adds filter for damage type (cutting, blunt)
+    def add_damage_type_filter(self, type:int) -> None:
+        if type > 0:
+            self.additional_filters += f'and palico_weapons.blunt={type-1} '
+
+    # adds filter for balance type (balanced, melee, boomerang)
+    def add_balance_type_filter(self, type:int) -> None:
+        if type > 0:
+            self.additional_filters += f'and palico_weapons.balance={type-1} '
+
+    # adds filter for element type (fire, water, thunder, ice, dragon, poison, sleep, paralysis, blastblight)
+    def add_element_type_filter(self, type:int) -> None:
+        if type > 0:
+            self.additional_filters += f"and palico_weapons.element='{db_constants.ELEMENT_TYPES[type].capitalize()}' "
+
+    # adds filter for sharpness type (red, yellow, green, blue, white, purple)
+    def add_sharpness_filter(self, type:int):
+        if type > 0:
+            self.additional_filters += f"and palico_weapons.sharpness={type} "
+
 
 if __name__ == '__main__':
     print(db_constants.ORDER_BY_TYPES)
