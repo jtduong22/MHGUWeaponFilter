@@ -23,7 +23,7 @@ class db_constants():
                       'affinity (ranged)': 'affinity_ranged', 'blunt': 'blunt', 'balance type': 'balance'}
 
 # wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
-class weapon_db:
+class WeaponDB:
     def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list):
         self.db = sql.connect(db_location)
         self.weapon_table = weapon_table
@@ -37,6 +37,9 @@ class weapon_db:
         if type > 0:
             key = list(db_constants.ORDER_BY_TYPES.keys())[type]
             self.results_order = f'order by {db_constants.ORDER_BY_TYPES[key]} desc, name asc'
+
+    def add_filter(self, filter:str):
+        self.additional_filters += f'and {filter} '
 
     # gets results from database
     def execute(self) -> list:
@@ -76,30 +79,6 @@ class weapon_db:
                 print_formatted(text, pad)
 
             print()
-
-class palico_weapon(weapon_db):
-    def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list):
-        weapon_db.__init__(self, db_location, weapon_table, columns_to_retrieve)
-
-    # adds filter for damage type (cutting, blunt)
-    def add_damage_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f'and palico_weapons.blunt={type-1} '
-
-    # adds filter for balance type (balanced, melee, boomerang)
-    def add_balance_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f'and palico_weapons.balance={type-1} '
-
-    # adds filter for element type (fire, water, thunder, ice, dragon, poison, sleep, paralysis, blastblight)
-    def add_element_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f"and palico_weapons.element='{db_constants.ELEMENT_TYPES[type].capitalize()}' "
-
-    # adds filter for sharpness type (red, yellow, green, blue, white, purple)
-    def add_sharpness_filter(self, type:int):
-        if type > 0:
-            self.additional_filters += f"and palico_weapons.sharpness={type} "
 
 
 if __name__ == '__main__':

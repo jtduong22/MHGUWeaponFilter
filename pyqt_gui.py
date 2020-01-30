@@ -3,14 +3,14 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-from database_query import *
+from weapon_definitions import *
 
 class MHDatabaseWindow(QMainWindow):
 #### Class Constants ####
     IMAGE_LOCATION = './Images/'
 
 #### Class variables ####
-    enabled_settings = {x:True for x in db_constants.ORDER_BY_TYPES.keys()}
+    enabled_settings = {}
 
     damage_type_combobox = None
     balance_layout_combobox = None
@@ -29,22 +29,24 @@ class MHDatabaseWindow(QMainWindow):
         self.setWindowTitle("MHGU Weapon DB")
 
         # initialize main
-        test_widget = QWidget(self)
-        self.setCentralWidget(test_widget)
-        test_widget.adjustSize()
+        main_widget = QWidget(self)
+        self.setCentralWidget(main_widget)
+        main_widget.adjustSize()
 
         # create layout? (required for alignment to work)
-        test_layout = QVBoxLayout(self)
-        test_widget.setLayout(test_layout)
+        main_layout = QVBoxLayout(self)
+        main_widget.setLayout(main_layout)
 
         # create settings button
         displayed_settings_button = QPushButton("Settings", self)
         displayed_settings_button.clicked.connect(self.create_settings_dialog)
-        test_layout.addWidget(displayed_settings_button, alignment=Qt.AlignRight)
+        main_layout.addWidget(displayed_settings_button, alignment=Qt.AlignRight)
+
+        self.enabled_settings = {x:True for x in PalicoWeapon.headers}
 
         label = QLabel("MHGU Filter", self)
         label.setAlignment(Qt.AlignHCenter)
-        test_layout.addWidget(label)
+        main_layout.addWidget(label)
 
         # create comboboxes
 
@@ -56,11 +58,11 @@ class MHDatabaseWindow(QMainWindow):
 
         # add combobox to application
 
-        test_layout.addLayout(damage_layout)
-        test_layout.addLayout(balance_layout)
-        test_layout.addLayout(element_layout)
-        test_layout.addLayout(sharpness_layout)
-        test_layout.addLayout(order_layout)
+        main_layout.addLayout(damage_layout)
+        main_layout.addLayout(balance_layout)
+        main_layout.addLayout(element_layout)
+        main_layout.addLayout(sharpness_layout)
+        main_layout.addLayout(order_layout)
 
         # set reference to combobox
 
@@ -72,17 +74,17 @@ class MHDatabaseWindow(QMainWindow):
 
         # add table
         self.weapon_table = QTableWidget(self)
-        test_layout.addWidget(self.weapon_table)
+        main_layout.addWidget(self.weapon_table)
 
         # create read all actions button
         read_button = QPushButton("Search")
         read_button.clicked.connect(self.search)
-        test_layout.addWidget(read_button, alignment=Qt.AlignBottom)
+        main_layout.addWidget(read_button, alignment=Qt.AlignBottom)
 
         # create close button
         quit_button = QPushButton("Close application", self)
         quit_button.clicked.connect(self.close)
-        test_layout.addWidget(quit_button, alignment=Qt.AlignBottom)
+        main_layout.addWidget(quit_button, alignment=Qt.AlignBottom)
 
     # initializes the settings dialog
     def create_settings_dialog(self) -> None:
@@ -150,7 +152,7 @@ class MHDatabaseWindow(QMainWindow):
     def search(self) -> None:
         # open database
         location = './Data/mhgu.db'
-        db = palico_weapon(location, 'palico_weapons', [db_constants.ORDER_BY_TYPES[x] for x in db_constants.ORDER_BY_TYPES.keys()])
+        db = PalicoWeapon(location)
 
         # apply selected filters to database
         self.get_selected_options(db)
@@ -163,7 +165,7 @@ class MHDatabaseWindow(QMainWindow):
 
 
     # read selected options and applies to database
-    def get_selected_options(self, db: weapon_db) -> None:
+    def get_selected_options(self, db: WeaponDB) -> None:
         # read selected option of all the comboboxes
         d_type_selection = self.damage_type_combobox.currentIndex()  # damage type: any, cutting, blunt
         b_type_selection = self.balance_layout_combobox.currentIndex()  # balance type: any, balanced, melee, boomerang
