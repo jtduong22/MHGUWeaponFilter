@@ -11,6 +11,8 @@ class MHDatabaseWindow(QMainWindow):
 
 #### Class variables ####
     enabled_settings = {}
+    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield}
+    selected_weapon_type = PalicoWeapon
 
     damage_type_combobox = None
     balance_layout_combobox = None
@@ -42,35 +44,23 @@ class MHDatabaseWindow(QMainWindow):
         displayed_settings_button.clicked.connect(self.create_settings_dialog)
         main_layout.addWidget(displayed_settings_button, alignment=Qt.AlignRight)
 
-        self.enabled_settings = {x:True for x in PalicoWeapon.headers}
+        # create combobox for selecting weapon type
+        select_weapons_combobox = QComboBox(self)
+        select_weapons_combobox.addItems(list(self.selectable_weapons.keys()))
+        select_weapons_combobox.currentTextChanged.connect(self.weapon_changed)
+        main_layout.addWidget(select_weapons_combobox, alignment=Qt.AlignRight)
+
+        self.enabled_settings = {x:True for x in self.selected_weapon_type.HEADERS}
 
         label = QLabel("MHGU Filter", self)
         label.setAlignment(Qt.AlignHCenter)
         main_layout.addWidget(label)
 
-        # create comboboxes
-
-        damage_layout = self.create_combobox_label("Damage Type: ", db_constants.DAMAGE_TYPES)
-        balance_layout = self.create_combobox_label("Balance Type: ", db_constants.BALANCE_TYPES)
-        element_layout = self.create_combobox_label("Element Type: ", db_constants.ELEMENT_TYPES)
-        sharpness_layout = self.create_combobox_label("Sharpness: ", db_constants.SHARPNESS_TYPES)
-        order_layout = self.create_combobox_label("Order By: ", db_constants.ORDER_BY_TYPES)
-
-        # add combobox to application
-
-        main_layout.addLayout(damage_layout)
-        main_layout.addLayout(balance_layout)
-        main_layout.addLayout(element_layout)
-        main_layout.addLayout(sharpness_layout)
-        main_layout.addLayout(order_layout)
-
-        # set reference to combobox
-
-        self.damage_type_combobox = damage_layout.itemAt(1).widget()
-        self.balance_layout_combobox = balance_layout.itemAt(1).widget()
-        self.element_layout_combobox = element_layout.itemAt(1).widget()
-        self.sharpness_layout_combobox = sharpness_layout.itemAt(1).widget()
-        self.order_layout_combobox = order_layout.itemAt(1).widget()
+        # create sublayout for selected weapon
+        # layout changes from weapon to weapon
+        self.weapon_filter_layout = QVBoxLayout()
+        self.create_weapon_layout(self.weapon_filter_layout, self.selected_weapon_type)
+        main_layout.addLayout(self.weapon_filter_layout)
 
         # add table
         self.weapon_table = QTableWidget(self)
@@ -85,6 +75,16 @@ class MHDatabaseWindow(QMainWindow):
         quit_button = QPushButton("Close application", self)
         quit_button.clicked.connect(self.close)
         main_layout.addWidget(quit_button, alignment=Qt.AlignBottom)
+
+    # fills layout with relevant comboboxes
+    # differs from weapon to weapon
+    def create_weapon_layout(self, layout, weapon_type:WeaponDB):
+        # cycle through each filter and populate with respective options
+        for filter in weapon_type.FILTERABLES:
+            combobox_layout = self.create_combobox_label(filter, weapon_type.FILTERABLES[filter])
+            layout.addLayout(combobox_layout)
+        order_by_layout = self.create_combobox_label('order by', weapon_type.HEADERS)
+        layout.addLayout(order_by_layout)
 
     # initializes the settings dialog
     def create_settings_dialog(self) -> None:
@@ -124,6 +124,34 @@ class MHDatabaseWindow(QMainWindow):
         # show dialog
         dialog.exec_()
 
+    # callback when weapon is changed
+    # clears the comboboxes from the weapon_filter_layout and replaces them with ones relevant to the weapon
+    def weapon_changed(self, selected_weapon:str) -> None:
+        # get class of selected weapon type
+        self.selected_weapon_type = self.selectable_weapons[selected_weapon]
+
+        # get settings
+        self.enabled_settings = {x:True for x in self.selected_weapon_type.HEADERS}
+
+        # clear previous comboboxes
+        self.clear_layout(self.weapon_filter_layout)
+
+        # fill with new comboboxes
+        self.create_weapon_layout(self.weapon_filter_layout, self.selected_weapon_type)
+
+    # recursively clear layout
+    def clear_layout(self, layout:QLayout) -> None:
+        # while not empty
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+
+            # delete if widget, delete stuff inside if layout
+            if widget is not None:
+                widget.deleteLater()
+            else:
+                self.clear_layout(item.layout())
+
     # callback when option is selected, changes the settings
     def option_selected(self) -> None:
         # get information about which checkbox
@@ -135,7 +163,7 @@ class MHDatabaseWindow(QMainWindow):
         self.enabled_settings[option] = is_enabled
 
     # quickly create combobox with label next to it
-    def create_combobox_label(self, label_text:str, drop_content: list) -> QLayout:
+    def create_combobox_label(self, label_text: str, drop_content: list) -> QLayout:
         layout = QHBoxLayout(self)
         label = QLabel(label_text, self)
         label.setAlignment(Qt.AlignRight)
@@ -152,7 +180,7 @@ class MHDatabaseWindow(QMainWindow):
     def search(self) -> None:
         # open database
         location = './Data/mhgu.db'
-        db = PalicoWeapon(location)
+        db = self.selected_weapon_type(location)
 
         # apply selected filters to database
         self.get_selected_options(db)
@@ -163,29 +191,26 @@ class MHDatabaseWindow(QMainWindow):
         # fill table
         self.fill_table(self.enabled_settings, results)
 
-
     # read selected options and applies to database
     def get_selected_options(self, db: WeaponDB) -> None:
-        # read selected option of all the comboboxes
-        d_type_selection = self.damage_type_combobox.currentIndex()  # damage type: any, cutting, blunt
-        b_type_selection = self.balance_layout_combobox.currentIndex()  # balance type: any, balanced, melee, boomerang
-        e_type_selection = self.element_layout_combobox.currentIndex()  # element type: any, fire, water, thunder, ice, dragon, poison, sleep, paralysis, blastblight
-        s_type_selection = self.sharpness_layout_combobox.currentIndex()  # sharpness type: any, red, yellow, green, blue, white, purple
-        o_type_selection = self.order_layout_combobox.currentIndex()  # order by type: name, rarity, attack (melee), attack (ranged), element, sharpness, affinity (melee), affinty (ranged), blunt, balance type
+        for child in self.weapon_filter_layout.children():
 
-        # add filters to database
-        db.add_damage_type_filter(d_type_selection)
-        db.add_balance_type_filter(b_type_selection)
-        db.add_element_type_filter(e_type_selection)
-        db.add_sharpness_filter(s_type_selection)
-        db.order_results_by(o_type_selection)
+            label = child.itemAt(0).widget()
+            combobox = child.itemAt(1).widget()
+            print(label.text())
+            print(combobox.currentIndex())
+
+            if label.text() == 'order by':
+                db.order_results_by(combobox.currentIndex())
+            else:
+                db.add_filter(label.text(), combobox.currentIndex())
 
     # populate table with results from database query
     def fill_table(self, displayed: dict, results: list) -> None:
 
         # select only data enabled for viewing
-        headers = [x for x in displayed.keys() if displayed[x] == True]
-        data = [x for x,y in enumerate(displayed.keys()) if displayed[y] == True]   # creates list of indexes of displayed features to cycle through
+        headers = [x for x in displayed.keys() if displayed[x] is True]
+        data = [x for x,y in enumerate(displayed.keys()) if displayed[y] is True]   # creates list of indexes of displayed features to cycle through
 
         # get size of table
         column_count = len(data)
@@ -215,9 +240,12 @@ class MHDatabaseWindow(QMainWindow):
 
         # change background color to match sharpness
         if item_type == 'sharpness':
-            sharpness_type = db_constants.SHARPNESS_TYPES[item_index]   # get sharpness type
-            color = db_constants.SHARPNESS_TO_RGB[sharpness_type]       # get RGB color
-            cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
+            if self.selected_weapon_type is PalicoWeapon:
+                sharpness_type = db_constants.SHARPNESS_TYPES[item_index]   # get sharpness type
+                color = db_constants.SHARPNESS_TO_RGB[sharpness_type]       # get RGB color
+                cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
+            else:
+                print(item_index)
 
         # add icon to cell
         elif item_type == 'element':
@@ -230,7 +258,7 @@ class MHDatabaseWindow(QMainWindow):
             text = item_index
 
             # replace number with 'cutting' or 'blunt'
-            if item_type == 'blunt':
+            if item_type == 'damage type':
                 text = db_constants.DAMAGE_TYPES[item_index + 1]
 
             # replace number with 'balanced', 'melee', or 'boomerang
@@ -251,5 +279,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     mainWin = MHDatabaseWindow()
     mainWin.show()
-
-sys.exit(app.exec_())
+    sys.exit(app.exec_())

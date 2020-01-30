@@ -33,10 +33,8 @@ class WeaponDB:
 
     # order results by specified column (name, rarity, attack (melee), attack (ranged), element, sharpness, affinity (melee), affinty (ranged), blunt, balance type)
     # ordered by name by default
-    def order_results_by(self, type:int) -> None:
-        if type > 0:
-            key = list(db_constants.ORDER_BY_TYPES.keys())[type]
-            self.results_order = f'order by {db_constants.ORDER_BY_TYPES[key]} desc, name asc'
+    def order_results_by(self, type:str) -> None:
+        self.results_order = f'order by {type} desc, name asc'
 
     def add_filter(self, filter:str):
         self.additional_filters += f'and {filter} '
