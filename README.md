@@ -1,5 +1,5 @@
 # MHGUWeaponFilter
-An application written in Python that filters and displays the weapons of Monster Hunter Generations Ultimate based on the selected parameters. Currently only supports Palico and Sword and Shield weapons.
+An application written in Python that filters and displays the weapons of Monster Hunter Generations Ultimate based on the selected parameters. Currently only supports Palico, Sword and Shield, Great Sword, Lance, and Long Sword weapons.
 
 ## Getting Started
 
@@ -17,7 +17,7 @@ Change the directory to folder and run `python3 pyqt_gui.py`
 * ~~clean up GUI more user friendly by adding icons + replacing numbers with corresponding text~~
 * add all weapons
 * fix sorting by affinity
-* fix sharpness 
+* ~~fix sharpness~~ 
 
 ## Acknowledgements
 GatheringHallStudios - Database was used from their [MHGenDatabase](https://github.com/gatheringhallstudios/MHGenDatabase/) project. 

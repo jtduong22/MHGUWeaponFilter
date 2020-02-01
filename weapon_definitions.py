@@ -34,24 +34,18 @@ class PalicoWeapon(WeaponDB):
 # child class of WeaponDB
 # all other weapons base off this one
 class HunterWeapon(WeaponDB):
-    # initializes WeaponDB
-    # indicates which weapon is being used with weapon_type
-    def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list, weapon_type):
-        WeaponDB.__init__(self, db_location, weapon_table, columns_to_retrieve)
-        super().add_filter(f'{weapon_table}.wtype == \"{weapon_type}\"')
-        super().add_filter(f'{weapon_table}.final == 1')
-
-# definition of SwordAndShield class
-class SwordAndShield(HunterWeapon):
     HEADERS = ['name', 'attack', 'element',
                'element attack', 'defense', 'sharpness', 'affinity', 'num slots']
     WEAPON_PARAMETERS = ['name', 'attack', 'element',
                          'element_attack', 'defense', 'sharpness', 'affinity', 'num_slots']
     FILTERABLES = {'element':db_constants.ELEMENT_TYPES, 'sharpness':db_constants.SHARPNESS_TYPES}
 
-    # initialize parent class
-    def __init__(self, db_location:str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Sword and Shield')
+    # initializes WeaponDB
+    # indicates which weapon is being used with weapon_type
+    def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list, weapon_type):
+        WeaponDB.__init__(self, db_location, weapon_table, columns_to_retrieve)
+        super().add_filter(f'{weapon_table}.wtype == \"{weapon_type}\"')
+        super().add_filter(f'{weapon_table}.final == 1')
 
     # filter results
     def add_filter(self, filter:str, type:int) -> None:
@@ -66,3 +60,33 @@ class SwordAndShield(HunterWeapon):
     def order_results_by(self, type:int) -> None:
         if type > 0:
             super().order_results_by(self.WEAPON_PARAMETERS[type])
+
+# definition of SwordAndShield class
+class SwordAndShield(HunterWeapon):
+    # initialize parent class
+    def __init__(self, db_location:str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Sword and Shield')
+
+# definition of GreatSword class
+class GreatSword(HunterWeapon):
+    # initialize parent class
+    def __init__(self, db_location:str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Great Sword')
+
+# definition of Hammer class
+class Hammer(HunterWeapon):
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Hammer')
+
+# definition of Lance class
+class Lance(HunterWeapon):
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Lance')
+
+# definition of LongSword class
+class LongSword(HunterWeapon):
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Long Sword')

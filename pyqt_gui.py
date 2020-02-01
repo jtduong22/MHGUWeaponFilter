@@ -11,7 +11,7 @@ class MHDatabaseWindow(QMainWindow):
 
 #### Class variables ####
     enabled_settings = {}
-    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield}
+    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword, 'Hammer':Hammer, 'Lance':Lance, 'Long Sword':LongSword}
     selected_weapon_type = PalicoWeapon
 
     damage_type_combobox = None
@@ -139,6 +139,9 @@ class MHDatabaseWindow(QMainWindow):
         # fill with new comboboxes
         self.create_weapon_layout(self.weapon_filter_layout, self.selected_weapon_type)
 
+        # clear contents
+        self.weapon_table.clear()
+
     # recursively clear layout
     def clear_layout(self, layout:QLayout) -> None:
         # while not empty
@@ -249,8 +252,7 @@ class MHDatabaseWindow(QMainWindow):
                 cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
             else:
                 cell = SharpnessBar(item_index.split()[0])
-                # cell.setText(item_index)
-                print(item_index)
+                # print(item_index)
 
         # add icon to cell
         elif item_type == 'element':
@@ -291,7 +293,7 @@ class SharpnessBar(QWidget):
 
         # convert string to list
         self.sharpness = [int(x) for x in sharpness_str.split('.')]
-        print(self.sharpness)
+        # print(self.sharpness)
 
     # draw the rectangles
     def paintEvent(self,e):
