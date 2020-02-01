@@ -230,8 +230,11 @@ class MHDatabaseWindow(QMainWindow):
                 # add info to the cell
                 item = self.parse_table_item(headers[y_count], row[column])
 
-                # add cell to table at position x,y
-                self.weapon_table.setItem(x_count, y_count, item)
+                if type(item) is QTableWidgetItem:
+                    # add cell to table at position x,y
+                    self.weapon_table.setItem(x_count, y_count, item)
+                else:
+                    self.weapon_table.setCellWidget(x_count, y_count, item)
 
         self.weapon_table.resizeColumnsToContents()
 
@@ -245,6 +248,8 @@ class MHDatabaseWindow(QMainWindow):
                 color = db_constants.SHARPNESS_TO_RGB[sharpness_type]       # get RGB color
                 cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
             else:
+                cell = SharpnessBar(item_index.split()[0])
+                # cell.setText(item_index)
                 print(item_index)
 
         # add icon to cell
@@ -274,6 +279,44 @@ class MHDatabaseWindow(QMainWindow):
 
         return  cell
 
+# Widget Class that takes in a sharpness value and draws rectangles to represent it
+class SharpnessBar(QWidget):
+    COLORS = [db_constants.SHARPNESS_TO_RGB[x] for x in db_constants.SHARPNESS_TYPES if x != 'any']
+    HEIGHT = 20
+    WIDTH_MULTIPLIER = 1.5
+
+    # init, takes in a sharpness string from database
+    def __init__(self, sharpness_str):
+        super().__init__()
+
+        # convert string to list
+        self.sharpness = [int(x) for x in sharpness_str.split('.')]
+        print(self.sharpness)
+
+    # draw the rectangles
+    def paintEvent(self,e):
+        p = QPainter(self)
+
+        # keep track of position of xpos
+        # i.e place next rectangle on the very right side
+        x_pos = 0
+        for s, c in zip(self.sharpness, self.COLORS):
+            # don't create anything if sharpness is 0
+            if s == 0:
+                continue
+
+            # get color
+            color = QColor(c[0], c[1], c[2])
+
+            # set color
+            p.setPen(QPen(color))
+            p.setBrush(QBrush(color, Qt.SolidPattern))
+
+            # draw rectangle
+            p.drawRect(x_pos, 0, s * self.WIDTH_MULTIPLIER, self.HEIGHT)
+
+            # increment next place to place rectangle
+            x_pos += s * self.WIDTH_MULTIPLIER
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

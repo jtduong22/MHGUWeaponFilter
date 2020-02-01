@@ -39,6 +39,7 @@ class HunterWeapon(WeaponDB):
     def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list, weapon_type):
         WeaponDB.__init__(self, db_location, weapon_table, columns_to_retrieve)
         super().add_filter(f'{weapon_table}.wtype == \"{weapon_type}\"')
+        super().add_filter(f'{weapon_table}.final == 1')
 
 # definition of SwordAndShield class
 class SwordAndShield(HunterWeapon):

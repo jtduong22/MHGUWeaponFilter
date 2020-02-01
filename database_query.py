@@ -17,11 +17,6 @@ class db_constants():
     SHARPNESS_TO_RGB = {x:y for x,y in zip(SHARPNESS_TYPES, [[0,0,0], [200, 0, 0], [200, 200, 0], [0, 200, 0], [0, 0, 200], [200, 200, 200], [200, 0, 200]])}
     SHA_TO_INDEX = list_to_index_converter(SHARPNESS_TYPES)
 
-    ORDER_BY_TYPES = {'name': 'name', 'rarity':'rarity', 'attack (melee)': 'attack_melee', 'attack (ranged)': 'attack_ranged',
-                      'element': 'element', 'element (melee)': 'element_melee', 'element (ranged)': 'element_ranged',
-                      'defense': 'defense', 'sharpness': 'sharpness', 'affinity (melee)': 'affinity_melee',
-                      'affinity (ranged)': 'affinity_ranged', 'blunt': 'blunt', 'balance type': 'balance'}
-
 # wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
 class WeaponDB:
     def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list):
@@ -77,7 +72,3 @@ class WeaponDB:
                 print_formatted(text, pad)
 
             print()
-
-
-if __name__ == '__main__':
-    print(db_constants.ORDER_BY_TYPES)
