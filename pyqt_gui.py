@@ -247,7 +247,7 @@ class MHDatabaseWindow(QMainWindow):
         # change background color to match sharpness
         if item_type == 'sharpness':
             if self.selected_weapon_type is PalicoWeapon:
-                sharpness_type = db_constants.SHARPNESS_TYPES[item_index]   # get sharpness type
+                sharpness_type = db_constants.SHARPNESS_TYPES[item_index + 1]   # get sharpness type
                 color = db_constants.SHARPNESS_TO_RGB[sharpness_type]       # get RGB color
                 cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
             else:

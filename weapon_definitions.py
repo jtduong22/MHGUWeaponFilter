@@ -24,7 +24,7 @@ class PalicoWeapon(WeaponDB):
                 elem = db_constants.ELEMENT_TYPES[type].capitalize()
                 super().add_filter(f'palico_weapons.element=\"{elem}\"')
             elif filter == 'sharpness':
-                super().add_filter(f'palico_weapons.sharpness={type}')
+                super().add_filter(f'palico_weapons.sharpness={type-1}')
 
     # order results by column
     def order_results_by(self, type:int) -> None:
@@ -53,8 +53,11 @@ class HunterWeapon(WeaponDB):
             if filter == 'element':
                 elem = db_constants.ELEMENT_TYPES[type].capitalize()
                 super().add_filter(f'weapons.element=\"{elem}\"')
-            if filter == 'sharpness':
-                super().add_filter(f'weapons.sharpness={type}')
+            # elif filter == 'sharpness':
+            #     super().add_filter(f'weapons.sharpness={type}')
+
+    def _add_filter(self, filter:str) -> None:
+        super().add_filter(filter)
 
     # order results by column
     def order_results_by(self, type:int) -> None:
