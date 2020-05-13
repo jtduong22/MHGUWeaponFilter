@@ -86,6 +86,44 @@ class MHDatabaseWindow(QMainWindow):
         order_by_layout = self.create_combobox_label('order by', weapon_type.HEADERS)
         layout.addLayout(order_by_layout)
 
+        if hasattr(weapon_type, 'CONTAINS'):
+            temp = weapon_type(self.DB_LOCATION)
+            temp.init_contains()
+
+            for key in HuntingHorn.CONTAINS:
+                contains_layout = self.create_contains_layout(key, HuntingHorn.CONTAINS[key])
+                layout.addLayout(contains_layout)
+                for thing in HuntingHorn.CONTAINS[key]:
+                    print(thing)
+
+    def create_contains_layout(self, label_text: str, content: list) -> QLayout:
+        layout = QVBoxLayout(self)
+
+        description_label = QLabel(f"{label_text}", self)
+        layout.addWidget(description_label)
+
+        # create new layout for checkmarks
+        checkbox_layout = QGridLayout(self)
+
+        # create checkboxes for each selectable option
+        # default row size is 7
+        row_size = 7
+
+        for count, text in enumerate(content):
+            # get position of item
+            x = count % row_size
+            y = count // row_size
+
+            # create checkbox
+            checkbox = QCheckBox(text, self)
+            checkbox.setChecked(False)
+            checkbox_layout.addWidget(checkbox,y,x)
+
+        layout.addLayout(checkbox_layout)
+
+        return layout
+
+
     # initializes the settings dialog
     def create_settings_dialog(self) -> None:
         # create a new dialog
@@ -105,8 +143,8 @@ class MHDatabaseWindow(QMainWindow):
         row_size = 3
         for count, key in enumerate(self.enabled_settings.keys()):
             # get position of item
-            x = count % 3
-            y = count // 3
+            x = count % row_size
+            y = count // row_size
 
             # create checkbox
             checkbox = QCheckBox(key, self)
@@ -141,10 +179,6 @@ class MHDatabaseWindow(QMainWindow):
 
         # clear contents
         self.weapon_table.clear()
-
-        # additional options
-        if hasattr(self.selected_weapon_type, 'CONTAINS'):
-            True
 
     # recursively clear layout
     def clear_layout(self, layout:QLayout) -> None:
@@ -201,17 +235,35 @@ class MHDatabaseWindow(QMainWindow):
 
     # read selected options and applies to database
     def get_selected_options(self, db: WeaponDB) -> None:
+        # cycle through each option
         for child in self.weapon_filter_layout.children():
-
+            # parse data
             label = child.itemAt(0).widget()
             combobox = child.itemAt(1).widget()
             print(label.text())
-            print(combobox.currentIndex())
+            if isinstance(combobox, QComboBox):
+                print(combobox.currentIndex())
+                # print(combobox))
 
-            if label.text() == 'order by':
-                db.order_results_by(combobox.currentIndex())
+                # order by
+                if label.text() == 'order by':
+                    db.order_results_by(combobox.currentIndex())
+                # filter by
+                else:
+                    db.add_filter(label.text(), combobox.currentIndex())
             else:
-                db.add_filter(label.text(), combobox.currentIndex())
+                print(child.itemAt(1).count())
+                grid = child.itemAt(1)
+                selected = 0
+                for c in range(grid.count()):
+                    checkbox = grid.itemAt(c).widget()
+                    if checkbox.isChecked():
+                        selected += pow(2,c)
+                    print(checkbox.text())
+
+                print(selected)
+                if selected > 0:
+                    db.add_filter(label.text(), selected)
 
         # if self.selected_weapon_type == HuntingHorn:
         #     db.add_filter('Songs', 3)

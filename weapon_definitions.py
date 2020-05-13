@@ -126,7 +126,7 @@ class HuntingHorn(HunterWeapon):
 
     def init_contains(self):
         song_names = self.get_song_names()
-        self.CONTAINS["Songs"] = song_names
+        HuntingHorn.CONTAINS["Songs"] = song_names
 
     # get list of all song names
     def get_song_names(self) -> list:
@@ -163,8 +163,6 @@ class HuntingHorn(HunterWeapon):
                 print(s)
 
             super()._add_filter(command)
-
-
         else:
             super().add_filter(filter, type)
 
