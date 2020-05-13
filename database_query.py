@@ -37,6 +37,14 @@ class WeaponDB:
         self.additional_filters += f'and {filter} '
 
     # gets results from database
+    def _raw_execute(self, command) -> list:
+        # execute and retrieve results from sql command
+        cursor = self.db.execute(command)
+        results = list(cursor.fetchall())
+
+        # return results
+        return results
+
     def execute(self) -> list:
         # adds selected options
         command = f"select {', '.join(self.displayed_options)} "
@@ -45,14 +53,11 @@ class WeaponDB:
 
         print(f"\n{command}")
 
-        # execute and retrieve results from sql command
-        cursor = self.db.execute(command)
-        results = list(cursor.fetchall())
+        return self._raw_execute(command)
 
-        # return results
-        return results
 
-    # prints results into command line
+
+    # prints results into command line`
     def print_results(self, cursor:sql.Cursor) -> None:
         # temporary function that takes string and int and adds padding to the end
         print_formatted = lambda text, space: (print(f"{text.center(max(space, len(text)))}", end=" | "))

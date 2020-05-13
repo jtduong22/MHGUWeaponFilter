@@ -93,3 +93,78 @@ class LongSword(HunterWeapon):
     # initialize parent class
     def __init__(self, db_location: str):
         HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Long Sword')
+
+# definition of SwitchAxe class
+class SwitchAxe(HunterWeapon):
+    HEADERS = HunterWeapon.HEADERS + ['phial types']
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['phial']
+    FILTERABLES = {**HunterWeapon.FILTERABLES, 'phial':db_constants.PHIAL_TYPES}
+
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Switch Axe')
+
+    # filter results
+    def add_filter(self, filter: str, type: int) -> None:
+        if type > 0:
+            if filter == 'phial':
+                phial = db_constants.PHIAL_TYPES[type].capitalize()
+                self._add_filter(f'weapons.phial=\'{phial}\'')
+            else:
+                super().add_filter(filter, type)
+
+
+# definition of HuntingHorn class
+class HuntingHorn(HunterWeapon):
+    CONTAINS = {"Songs":[]}
+
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Hunting Horn')
+
+    def init_contains(self):
+        song_names = self.get_song_names()
+        self.CONTAINS["Songs"] = song_names
+
+    # get list of all song names
+    def get_song_names(self) -> list:
+        command = 'select distinct name from horn_melodies'
+        results = [x[0] for x in self._raw_execute(command)]
+
+        return results
+
+    # get notes associated with song name
+    def get_notes(self, song_name: str) -> dict:
+        command = f'select distinct notes from horn_melodies where name == \"{song_name}\" order by name'
+        results = self._raw_execute(command)
+        notes = [x[0] for x in results]
+
+        return notes
+
+    # filter results
+    # checks if trying to filter for song, calls parent's add_filter otherwise
+    def add_filter(self, filter: str, type: int) -> None:
+        if filter == 'Songs':
+            filtered_songs = []
+
+            for i in range(len(self.CONTAINS['Songs'])):
+                if type % 2 == 1:
+                    filtered_songs.append(self.CONTAINS['Songs'][i])
+                type = type // 2
+
+            formatted_songs = [f"select notes from horn_melodies where name == '{x}'" for x in filtered_songs]
+            command = ' intersect '.join(formatted_songs)
+            print(command)
+
+            command = f"weapons.horn_notes in ({command})"
+            for s in filtered_songs:
+                print(s)
+
+            super()._add_filter(command)
+
+
+        else:
+            super().add_filter(filter, type)
+
+
+

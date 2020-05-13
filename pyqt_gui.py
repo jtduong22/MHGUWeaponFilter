@@ -8,11 +8,11 @@ from weapon_definitions import *
 class MHDatabaseWindow(QMainWindow):
 #### Class Constants ####
     IMAGE_LOCATION = './Images/'
-
+    DB_LOCATION = './Data/mhgu.db'
 #### Class variables ####
     enabled_settings = {}
-    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword, 'Hammer':Hammer, 'Lance':Lance, 'Long Sword':LongSword}
-    selected_weapon_type = PalicoWeapon
+    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword, 'Hammer':Hammer, 'Lance':Lance, 'Long Sword':LongSword, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn}
+    selected_weapon_type = HuntingHorn
 
     damage_type_combobox = None
     balance_layout_combobox = None
@@ -142,6 +142,10 @@ class MHDatabaseWindow(QMainWindow):
         # clear contents
         self.weapon_table.clear()
 
+        # additional options
+        if hasattr(self.selected_weapon_type, 'CONTAINS'):
+            True
+
     # recursively clear layout
     def clear_layout(self, layout:QLayout) -> None:
         # while not empty
@@ -182,8 +186,8 @@ class MHDatabaseWindow(QMainWindow):
     # search database for results
     def search(self) -> None:
         # open database
-        location = './Data/mhgu.db'
-        db = self.selected_weapon_type(location)
+        db = self.selected_weapon_type(self.DB_LOCATION)
+        db.init_contains()
 
         # apply selected filters to database
         self.get_selected_options(db)
@@ -207,6 +211,9 @@ class MHDatabaseWindow(QMainWindow):
                 db.order_results_by(combobox.currentIndex())
             else:
                 db.add_filter(label.text(), combobox.currentIndex())
+
+        # if self.selected_weapon_type == HuntingHorn:
+        #     db.add_filter('Songs', 3)
 
     # populate table with results from database query
     def fill_table(self, displayed: dict, results: list) -> None:
@@ -284,8 +291,8 @@ class MHDatabaseWindow(QMainWindow):
 # Widget Class that takes in a sharpness value and draws rectangles to represent it
 class SharpnessBar(QWidget):
     COLORS = [db_constants.SHARPNESS_TO_RGB[x] for x in db_constants.SHARPNESS_TYPES if x != 'any']
-    HEIGHT = 20
-    WIDTH_MULTIPLIER = 1.5
+    HEIGHT = 30
+    WIDTH_MULTIPLIER = 1
 
     # init, takes in a sharpness string from database
     def __init__(self, sharpness_str):
