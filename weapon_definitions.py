@@ -38,7 +38,7 @@ class HunterWeapon(WeaponDB):
                'element attack', 'defense', 'sharpness', 'affinity', 'num slots']
     WEAPON_PARAMETERS = ['name', 'attack', 'element',
                          'element_attack', 'defense', 'sharpness', 'affinity', 'num_slots']
-    FILTERABLES = {'element':db_constants.ELEMENT_TYPES, 'sharpness':db_constants.SHARPNESS_TYPES}
+    FILTERABLES = {'element':db_constants.ELEMENT_TYPES, 'sharpness':db_constants.SHARPNESS_TYPES, 'num slots':['any', '1', '2', '3']}
 
     # initializes WeaponDB
     # indicates which weapon is being used with weapon_type
@@ -53,6 +53,8 @@ class HunterWeapon(WeaponDB):
             if filter == 'element':
                 elem = db_constants.ELEMENT_TYPES[type].capitalize()
                 super().add_filter(f'weapons.element=\"{elem}\"')
+            elif filter == 'num slots':
+                super().add_filter(f'num_slots == \'{type}\'')
             # elif filter == 'sharpness':
             #     super().add_filter(f'weapons.sharpness={type}')
 

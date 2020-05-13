@@ -187,7 +187,8 @@ class MHDatabaseWindow(QMainWindow):
     def search(self) -> None:
         # open database
         db = self.selected_weapon_type(self.DB_LOCATION)
-        db.init_contains()
+        if hasattr(db, 'CONTAINS'):
+            db.init_contains()
 
         # apply selected filters to database
         self.get_selected_options(db)
