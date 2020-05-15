@@ -159,8 +159,6 @@ class HuntingHorn(HunterWeapon):
             print(command)
 
             command = f"weapons.horn_notes in ({command})"
-            for s in filtered_songs:
-                print(s)
 
             super()._add_filter(command)
         else:

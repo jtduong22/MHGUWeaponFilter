@@ -12,7 +12,8 @@ class MHDatabaseWindow(QMainWindow):
 #### Class variables ####
     enabled_settings = {}
     selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword, 'Hammer':Hammer, 'Lance':Lance, 'Long Sword':LongSword, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn}
-    selected_weapon_type = HuntingHorn
+    selected_weapon_type = SwordAndShield
+    sharpness_level = 0
 
     damage_type_combobox = None
     balance_layout_combobox = None
@@ -27,7 +28,7 @@ class MHDatabaseWindow(QMainWindow):
     def __init__(self):
         # initialize main window
         QMainWindow.__init__(self)
-        self.setMinimumSize(1250,400)
+        self.setMinimumSize(1250,600)
         self.setWindowTitle("MHGU Weapon DB")
 
         # initialize main
@@ -47,6 +48,8 @@ class MHDatabaseWindow(QMainWindow):
         # create combobox for selecting weapon type
         select_weapons_combobox = QComboBox(self)
         select_weapons_combobox.addItems(list(self.selectable_weapons.keys()))
+        index = list(self.selectable_weapons.values()).index(self.selected_weapon_type)
+        select_weapons_combobox.setCurrentIndex(index)
         select_weapons_combobox.currentTextChanged.connect(self.weapon_changed)
         main_layout.addWidget(select_weapons_combobox, alignment=Qt.AlignRight)
 
@@ -86,6 +89,8 @@ class MHDatabaseWindow(QMainWindow):
         order_by_layout = self.create_combobox_label('order by', weapon_type.HEADERS)
         layout.addLayout(order_by_layout)
 
+        layout.addLayout(self.create_sharpness_level())
+
         if hasattr(weapon_type, 'CONTAINS'):
             temp = weapon_type(self.DB_LOCATION)
             temp.init_contains()
@@ -93,8 +98,22 @@ class MHDatabaseWindow(QMainWindow):
             for key in HuntingHorn.CONTAINS:
                 contains_layout = self.create_contains_layout(key, HuntingHorn.CONTAINS[key])
                 layout.addLayout(contains_layout)
-                for thing in HuntingHorn.CONTAINS[key]:
-                    print(thing)
+
+    def create_sharpness_level(self) -> QHBoxLayout:
+        layout = QHBoxLayout(self)
+        label = QLabel("Sharpness Level")
+        label.setAlignment(Qt.AlignRight)
+        layout.addWidget(label)
+
+
+        radio_group = QHBoxLayout(self)
+        radio_group.setAlignment(Qt.AlignHCenter)
+        layout.addLayout(radio_group)
+        for i in range(3):
+            radio_button = QRadioButton(f"Sharpness+{i}")
+            radio_group.addWidget(radio_button)
+        radio_group.itemAt(0).widget().setChecked(True)
+        return layout
 
     def create_contains_layout(self, label_text: str, content: list) -> QLayout:
         layout = QVBoxLayout(self)
@@ -241,9 +260,10 @@ class MHDatabaseWindow(QMainWindow):
             label = child.itemAt(0).widget()
             combobox = child.itemAt(1).widget()
             print(label.text())
+
+            # parse combobox
             if isinstance(combobox, QComboBox):
                 print(combobox.currentIndex())
-                # print(combobox))
 
                 # order by
                 if label.text() == 'order by':
@@ -251,8 +271,18 @@ class MHDatabaseWindow(QMainWindow):
                 # filter by
                 else:
                     db.add_filter(label.text(), combobox.currentIndex())
+
+            # parse Sharpness Level radio buttons
+            elif label.text() == 'Sharpness Level':
+                radio_group = child.itemAt(1)
+                for c in range(radio_group.count()):
+                    radio_button = radio_group.itemAt(c).widget()
+                    if radio_button.isChecked():
+                        self.sharpness_level = int(radio_button.text().split('+')[1])
+                        break
+
+            # parse Horn / Shots
             else:
-                print(child.itemAt(1).count())
                 grid = child.itemAt(1)
                 selected = 0
                 for c in range(grid.count()):
@@ -264,9 +294,6 @@ class MHDatabaseWindow(QMainWindow):
                 print(selected)
                 if selected > 0:
                     db.add_filter(label.text(), selected)
-
-        # if self.selected_weapon_type == HuntingHorn:
-        #     db.add_filter('Songs', 3)
 
     # populate table with results from database query
     def fill_table(self, displayed: dict, results: list) -> None:
@@ -300,6 +327,7 @@ class MHDatabaseWindow(QMainWindow):
                     self.weapon_table.setCellWidget(x_count, y_count, item)
 
         self.weapon_table.resizeColumnsToContents()
+        # header.setStretchLastSection(True)
 
     def parse_table_item(self, item_type:str, item_index: int):
         cell = QTableWidgetItem()
@@ -311,7 +339,8 @@ class MHDatabaseWindow(QMainWindow):
                 color = db_constants.SHARPNESS_TO_RGB[sharpness_type]       # get RGB color
                 cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
             else:
-                cell = SharpnessBar(item_index.split()[0])
+                cell = SharpnessBar(item_index.split()[self.sharpness_level])
+                cell.setMinimumWidth(45 * SharpnessBar.WIDTH_MULTIPLIER)
                 # print(item_index)
 
         # add icon to cell
@@ -345,7 +374,7 @@ class MHDatabaseWindow(QMainWindow):
 class SharpnessBar(QWidget):
     COLORS = [db_constants.SHARPNESS_TO_RGB[x] for x in db_constants.SHARPNESS_TYPES if x != 'any']
     HEIGHT = 30
-    WIDTH_MULTIPLIER = 1
+    WIDTH_MULTIPLIER = 2
 
     # init, takes in a sharpness string from database
     def __init__(self, sharpness_str):
@@ -358,7 +387,7 @@ class SharpnessBar(QWidget):
     # draw the rectangles
     def paintEvent(self,e):
         p = QPainter(self)
-
+        self.width = 0
         # keep track of position of xpos
         # i.e place next rectangle on the very right side
         x_pos = 0
@@ -366,6 +395,8 @@ class SharpnessBar(QWidget):
             # don't create anything if sharpness is 0
             if s == 0:
                 continue
+
+            self.width += s * self.WIDTH_MULTIPLIER
 
             # get color
             color = QColor(c[0], c[1], c[2])
