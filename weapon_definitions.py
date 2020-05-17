@@ -38,7 +38,7 @@ class HunterWeapon(WeaponDB):
                'element attack', 'defense', 'sharpness', 'affinity', 'num slots']
     WEAPON_PARAMETERS = ['name', 'attack', 'element',
                          'element_attack', 'defense', 'sharpness', 'affinity', 'num_slots']
-    FILTERABLES = {'element':db_constants.ELEMENT_TYPES, 'sharpness':db_constants.SHARPNESS_TYPES, 'num slots':['any', '1', '2', '3']}
+    FILTERABLES = {'element':db_constants.ELEMENT_TYPES, 'num slots':['any', '1', '2', '3']}
 
     # initializes WeaponDB
     # indicates which weapon is being used with weapon_type
@@ -97,14 +97,33 @@ class LongSword(HunterWeapon):
         HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Long Sword')
 
 # definition of SwitchAxe class
-class SwitchAxe(HunterWeapon):
+class ChargeBlade(HunterWeapon):
     HEADERS = HunterWeapon.HEADERS + ['phial types']
     WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['phial']
-    FILTERABLES = {**HunterWeapon.FILTERABLES, 'phial':db_constants.PHIAL_TYPES}
+    FILTERABLES = {**HunterWeapon.FILTERABLES, 'phial':['Impact', 'Element']}
 
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Switch Axe')
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Charge Blade')
+
+    # filter results
+    def add_filter(self, filter: str, type: int) -> None:
+        if type > 0:
+            if filter == 'phial':
+                phial = db_constants.PHIAL_TYPES[type].capitalize()
+                self._add_filter(f'weapons.phial=\'{phial}\'')
+            else:
+                super().add_filter(filter, type)
+
+# definition of SwitchAxe class
+class SwitchAxe(HunterWeapon):
+    HEADERS = HunterWeapon.HEADERS + ['phial types']
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['phial']
+    FILTERABLES = {**HunterWeapon.FILTERABLES, 'phial':[x for x in db_constants.PHIAL_TYPES if x != 'impact']}
+
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Charge Blade')
 
     # filter results
     def add_filter(self, filter: str, type: int) -> None:
@@ -164,5 +183,42 @@ class HuntingHorn(HunterWeapon):
         else:
             super().add_filter(filter, type)
 
+# definition of Gunlance class
+class Gunlance(HunterWeapon):
+    HEADERS = HunterWeapon.HEADERS + ['shelling type']
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['shelling_type']
+    FILTERABLES = {**HunterWeapon.FILTERABLES, 'shelling type':db_constants.SHELLING_TYPES}
+
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Gunlance')
+
+    # filter results
+    def add_filter(self, filter: str, type: int) -> None:
+        if type > 0:
+            if filter == 'shelling type':
+                shell = db_constants.SHELLING_TYPES[type]
+                self._add_filter(f'weapons.shelling_type like \'{shell}%\'')
+            else:
+                super().add_filter(filter, type)
+
+# definition of DualBlades class
+class DualBlades(HunterWeapon):
+    HEADERS = HunterWeapon.HEADERS[0:4] + ['element 2', 'element 2 attack'] + HunterWeapon.HEADERS[4:len(HunterWeapon.HEADERS)]
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS[0:4] + ['element_2', 'element_2_attack'] + HunterWeapon.WEAPON_PARAMETERS[4:len(HunterWeapon.WEAPON_PARAMETERS)]
+    FILTERABLES = {**HunterWeapon.FILTERABLES, 'element 2':db_constants.ELEMENT_TYPES}
+
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Dual Blades')
+
+    # filter results
+    def add_filter(self, filter: str, type: int) -> None:
+        if type > 0:
+            if filter == 'element 2':
+                elem = db_constants.ELEMENT_TYPES[type].capitalize()
+                self._add_filter(f'weapons.element_2=\"{elem}\"')
+            else:
+                super().add_filter(filter, type)
 
 

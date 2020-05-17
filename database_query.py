@@ -18,6 +18,8 @@ class db_constants():
     SHA_TO_INDEX = list_to_index_converter(SHARPNESS_TYPES)
 
     PHIAL_TYPES = ["any", "power", "dragon", "exhaust", "element", "poison", "paralysis", "impact"]
+    # SHELLING_TYPES = ["any"] + [f"{x} {y}" for x in ["Normal", "Long", "Wide"] for y in ['', '1', '2', '3', '4', '5'] ]
+    SHELLING_TYPES = ["any", "Normal", "Long", "Wide"]
 
 # wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
 class WeaponDB:

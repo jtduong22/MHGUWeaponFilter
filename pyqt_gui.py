@@ -11,15 +11,9 @@ class MHDatabaseWindow(QMainWindow):
     DB_LOCATION = './Data/mhgu.db'
 #### Class variables ####
     enabled_settings = {}
-    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword, 'Hammer':Hammer, 'Lance':Lance, 'Long Sword':LongSword, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn}
+    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword, 'Hammer':Hammer, 'Lance':Lance, 'Dual Blades':DualBlades, 'Long Sword':LongSword, 'Charge Blade':ChargeBlade, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn, 'Gunlance':Gunlance}
     selected_weapon_type = SwordAndShield
     sharpness_level = 0
-
-    damage_type_combobox = None
-    balance_layout_combobox = None
-    element_layout_combobox = None
-    sharpness_layout_combobox = None
-    order_layout_combobox = None
 
     weapon_table = None
 
@@ -344,7 +338,7 @@ class MHDatabaseWindow(QMainWindow):
                 # print(item_index)
 
         # add icon to cell
-        elif item_type == 'element':
+        elif item_type == 'element' or item_type == 'element 2':
             picture_location = self.IMAGE_LOCATION + item_index.lower() + '.png'
             icon = QIcon(picture_location)
             cell.setIcon(icon)
