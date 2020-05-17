@@ -221,4 +221,8 @@ class DualBlades(HunterWeapon):
             else:
                 super().add_filter(filter, type)
 
-
+# definition of InsectGlaive class
+class InsectGlaive(HunterWeapon):
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Insect Glaive')

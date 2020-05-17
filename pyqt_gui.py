@@ -11,7 +11,10 @@ class MHDatabaseWindow(QMainWindow):
     DB_LOCATION = './Data/mhgu.db'
 #### Class variables ####
     enabled_settings = {}
-    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword, 'Hammer':Hammer, 'Lance':Lance, 'Dual Blades':DualBlades, 'Long Sword':LongSword, 'Charge Blade':ChargeBlade, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn, 'Gunlance':Gunlance}
+    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword,
+                          'Hammer':Hammer, 'Lance':Lance, 'Dual Blades':DualBlades, 'Long Sword':LongSword,
+                          'Charge Blade':ChargeBlade, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn,
+                          'Gunlance':Gunlance, 'Insect Glaive':InsectGlaive}
     selected_weapon_type = SwordAndShield
     sharpness_level = 0
 
