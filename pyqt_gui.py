@@ -360,6 +360,19 @@ class MHDatabaseWindow(QMainWindow):
             elif item_type == 'balance type':
                 text = db_constants.BALANCE_TYPES[item_index + 1]
 
+            elif item_type == 'charges':
+                # charges = [f"{x:9}" for x in text.split('|')]
+                charges = []
+                # print(text)
+                for x in text.split('|'):
+                    if x != '':
+                        y = x.split()
+                        charges += [f"{y[0]:6} {y[1]:2}"]
+
+                text = ' | '.join(charges)
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+                cell.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
             # align all the numbers to the right side
             elif item_type != 'name':
                 cell.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)

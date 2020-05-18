@@ -236,6 +236,9 @@ class InsectGlaive(BladeMaster):
 
 # definition of Bow class
 class Bow(HunterWeapon):
+    HEADERS = HunterWeapon.HEADERS + ['charges']
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['charges']
+    FILTERABLES = {**HunterWeapon.FILTERABLES, 'charges':db_constants.CHARGE_TYPES}
     CONTAINS = {'Coatings':[]}
 
     # initialize parent class
@@ -248,19 +251,24 @@ class Bow(HunterWeapon):
     # filter results
     # checks if trying to filter for coating, calls parent's add_filter otherwise
     def add_filter(self, filter: str, type: int) -> None:
-        # add coating
-        if filter == 'Coatings':
-            # get possible coatings
-            selected_coatings = type
-            possible_coats = self.get_all_other_coatings(len(db_constants.COATING_TYPES), 0, selected_coatings)
+        if type > 0:
+            # add coating
+            if filter == 'Coatings':
+                # get possible coatings
+                selected_coatings = type
+                possible_coats = self.get_all_other_coatings(len(db_constants.COATING_TYPES), 0, selected_coatings)
 
-            # create command
-            command = ', '.join(possible_coats)
-            command = f"weapons.coatings in ({command})"
-            print(command)
-            super()._add_filter(command)
-        else:
-            super().add_filter(filter, type)
+                # create command
+                command = ', '.join(possible_coats)
+                command = f"weapons.coatings in ({command})"
+                print(command)
+                super()._add_filter(command)
+            elif filter == 'charges':
+                charge = db_constants.CHARGE_TYPES[type]
+                command = f"weapons.charges like \"%{charge}%\""
+                super()._add_filter(command)
+            else:
+                super().add_filter(filter, type)
 
     # calculates all other coatings code
     # database stores coats in bitcode (whereever there's a 1, the weapon has that coating)

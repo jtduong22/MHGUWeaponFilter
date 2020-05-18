@@ -21,6 +21,7 @@ class db_constants():
     # SHELLING_TYPES = ["any"] + [f"{x} {y}" for x in ["Normal", "Long", "Wide"] for y in ['', '1', '2', '3', '4', '5'] ]
     SHELLING_TYPES = ["any", "Normal", "Long", "Wide"]
     COATING_TYPES = ["Power 1", "Power 2", "Element 1", "Element 2", "Close Range", "Poison", "Paralysis", "Sleep", "Exhaust", "Blast"]
+    CHARGE_TYPES = ["any", "Rapid", "Pierce", "Spread", "Heavy"]
 
 # wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
 class WeaponDB:

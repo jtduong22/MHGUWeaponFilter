@@ -20,6 +20,7 @@ Change the directory to folder and run `python3 pyqt_gui.py`
 * ~~fix sorting by affinity~~
 * ~~fix sharpness~~ 
 * display which songs a hunting horn has
+* filter which charge a bow has by number
 
 ## Acknowledgements
 GatheringHallStudios - Database was used from their [MHGenDatabase](https://github.com/gatheringhallstudios/MHGenDatabase/) project. 
