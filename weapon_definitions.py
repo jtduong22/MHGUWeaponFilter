@@ -35,9 +35,9 @@ class PalicoWeapon(WeaponDB):
 # all other weapons base off this one
 class HunterWeapon(WeaponDB):
     HEADERS = ['name', 'attack', 'element',
-               'element attack', 'defense', 'sharpness', 'affinity', 'num slots']
+               'element attack', 'defense', 'affinity', 'num slots']
     WEAPON_PARAMETERS = ['name', 'attack', 'element',
-                         'element_attack', 'defense', 'sharpness', 'affinity', 'num_slots']
+                         'element_attack', 'defense', 'affinity', 'num_slots']
     FILTERABLES = {'element':db_constants.ELEMENT_TYPES, 'num slots':['any', '1', '2', '3']}
 
     # initializes WeaponDB
@@ -66,45 +66,52 @@ class HunterWeapon(WeaponDB):
         if type > 0:
             super().order_results_by(self.WEAPON_PARAMETERS[type])
 
+class BladeMaster(HunterWeapon):
+    HEADERS = HunterWeapon.HEADERS + ['sharpness']
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['sharpness']
+
+    def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list, weapon_type: str):
+        HunterWeapon.__init__(self, db_location, weapon_table, columns_to_retrieve, weapon_type)
+
 # definition of SwordAndShield class
-class SwordAndShield(HunterWeapon):
+class SwordAndShield(BladeMaster):
     # initialize parent class
     def __init__(self, db_location:str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Sword and Shield')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Sword and Shield')
 
 # definition of GreatSword class
-class GreatSword(HunterWeapon):
+class GreatSword(BladeMaster):
     # initialize parent class
     def __init__(self, db_location:str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Great Sword')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Great Sword')
 
 # definition of Hammer class
-class Hammer(HunterWeapon):
+class Hammer(BladeMaster):
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Hammer')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Hammer')
 
 # definition of Lance class
-class Lance(HunterWeapon):
+class Lance(BladeMaster):
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Lance')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Lance')
 
 # definition of LongSword class
-class LongSword(HunterWeapon):
+class LongSword(BladeMaster):
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Long Sword')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Long Sword')
 
 # definition of SwitchAxe class
-class ChargeBlade(HunterWeapon):
-    HEADERS = HunterWeapon.HEADERS + ['phial types']
-    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['phial']
-    FILTERABLES = {**HunterWeapon.FILTERABLES, 'phial':['Impact', 'Element']}
+class ChargeBlade(BladeMaster):
+    HEADERS = BladeMaster.HEADERS + ['phial types']
+    WEAPON_PARAMETERS = BladeMaster.WEAPON_PARAMETERS + ['phial']
+    FILTERABLES = {**BladeMaster.FILTERABLES, 'phial':['Impact', 'Element']}
 
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Charge Blade')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Charge Blade')
 
     # filter results
     def add_filter(self, filter: str, type: int) -> None:
@@ -116,14 +123,14 @@ class ChargeBlade(HunterWeapon):
                 super().add_filter(filter, type)
 
 # definition of SwitchAxe class
-class SwitchAxe(HunterWeapon):
-    HEADERS = HunterWeapon.HEADERS + ['phial types']
-    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['phial']
-    FILTERABLES = {**HunterWeapon.FILTERABLES, 'phial':[x for x in db_constants.PHIAL_TYPES if x != 'impact']}
+class SwitchAxe(BladeMaster):
+    HEADERS = BladeMaster.HEADERS + ['phial types']
+    WEAPON_PARAMETERS = BladeMaster.WEAPON_PARAMETERS + ['phial']
+    FILTERABLES = {**BladeMaster.FILTERABLES, 'phial':[x for x in db_constants.PHIAL_TYPES if x != 'impact']}
 
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Charge Blade')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Charge Blade')
 
     # filter results
     def add_filter(self, filter: str, type: int) -> None:
@@ -136,12 +143,12 @@ class SwitchAxe(HunterWeapon):
 
 
 # definition of HuntingHorn class
-class HuntingHorn(HunterWeapon):
+class HuntingHorn(BladeMaster):
     CONTAINS = {"Songs":[]}
 
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Hunting Horn')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Hunting Horn')
 
     def init_contains(self):
         song_names = self.get_song_names()
@@ -168,10 +175,10 @@ class HuntingHorn(HunterWeapon):
         if filter == 'Songs':
             filtered_songs = []
 
-            for i in range(len(self.CONTAINS['Songs'])):
+            for i in reversed(range(len(self.CONTAINS['Songs']))):
                 if type % 2 == 1:
                     filtered_songs.append(self.CONTAINS['Songs'][i])
-                type = type // 2
+                type = type >> 1
 
             formatted_songs = [f"select notes from horn_melodies where name == '{x}'" for x in filtered_songs]
             command = ' intersect '.join(formatted_songs)
@@ -184,14 +191,14 @@ class HuntingHorn(HunterWeapon):
             super().add_filter(filter, type)
 
 # definition of Gunlance class
-class Gunlance(HunterWeapon):
-    HEADERS = HunterWeapon.HEADERS + ['shelling type']
-    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['shelling_type']
-    FILTERABLES = {**HunterWeapon.FILTERABLES, 'shelling type':db_constants.SHELLING_TYPES}
+class Gunlance(BladeMaster):
+    HEADERS = BladeMaster.HEADERS + ['shelling type']
+    WEAPON_PARAMETERS = BladeMaster.WEAPON_PARAMETERS + ['shelling_type']
+    FILTERABLES = {**BladeMaster.FILTERABLES, 'shelling type':db_constants.SHELLING_TYPES}
 
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Gunlance')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Gunlance')
 
     # filter results
     def add_filter(self, filter: str, type: int) -> None:
@@ -203,14 +210,14 @@ class Gunlance(HunterWeapon):
                 super().add_filter(filter, type)
 
 # definition of DualBlades class
-class DualBlades(HunterWeapon):
-    HEADERS = HunterWeapon.HEADERS[0:4] + ['element 2', 'element 2 attack'] + HunterWeapon.HEADERS[4:len(HunterWeapon.HEADERS)]
-    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS[0:4] + ['element_2', 'element_2_attack'] + HunterWeapon.WEAPON_PARAMETERS[4:len(HunterWeapon.WEAPON_PARAMETERS)]
-    FILTERABLES = {**HunterWeapon.FILTERABLES, 'element 2':db_constants.ELEMENT_TYPES}
+class DualBlades(BladeMaster):
+    HEADERS = BladeMaster.HEADERS[0:4] + ['element 2', 'element 2 attack'] + BladeMaster.HEADERS[4:len(BladeMaster.HEADERS)]
+    WEAPON_PARAMETERS = BladeMaster.WEAPON_PARAMETERS[0:4] + ['element_2', 'element_2_attack'] + BladeMaster.WEAPON_PARAMETERS[4:len(BladeMaster.WEAPON_PARAMETERS)]
+    FILTERABLES = {**BladeMaster.FILTERABLES, 'element 2':db_constants.ELEMENT_TYPES}
 
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Dual Blades')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Dual Blades')
 
     # filter results
     def add_filter(self, filter: str, type: int) -> None:
@@ -222,7 +229,57 @@ class DualBlades(HunterWeapon):
                 super().add_filter(filter, type)
 
 # definition of InsectGlaive class
-class InsectGlaive(HunterWeapon):
+class InsectGlaive(BladeMaster):
     # initialize parent class
     def __init__(self, db_location: str):
-        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Insect Glaive')
+        BladeMaster.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Insect Glaive')
+
+# definition of Bow class
+class Bow(HunterWeapon):
+    CONTAINS = {'Coatings':[]}
+
+    # initialize parent class
+    def __init__(self, db_location: str):
+        HunterWeapon.__init__(self, db_location, "weapons", self.WEAPON_PARAMETERS, 'Bow')
+
+    def init_contains(self):
+        Bow.CONTAINS['Coatings'] = db_constants.COATING_TYPES
+
+    # filter results
+    # checks if trying to filter for coating, calls parent's add_filter otherwise
+    def add_filter(self, filter: str, type: int) -> None:
+        # add coating
+        if filter == 'Coatings':
+            # get possible coatings
+            selected_coatings = type
+            possible_coats = self.get_all_other_coatings(len(db_constants.COATING_TYPES), 0, selected_coatings)
+
+            # create command
+            command = ', '.join(possible_coats)
+            command = f"weapons.coatings in ({command})"
+            print(command)
+            super()._add_filter(command)
+        else:
+            super().add_filter(filter, type)
+
+    # calculates all other coatings code
+    # database stores coats in bitcode (whereever there's a 1, the weapon has that coating)
+        # e.g nerscylla bow has power 1, poison, and sleep coatings
+        # has the code 1065 or 1000010100 1
+        # leftmost 1 is power 1, 6th 1 is poison, 8th 1 is sleep (adds up to 532)
+        # database multiplies by 2 and adds 1 (hence 1065)
+    def get_all_other_coatings(self, index, sum, coating_code) -> list:
+        potential_coating = []
+
+        # keep going
+        if index > 0:
+            # coating was not explicitly selected. add scenario where coating doesn't exist
+            if (coating_code >> (index - 1)) % 2 == 0:
+                potential_coating += self.get_all_other_coatings(index - 1, sum << 1, coating_code)
+
+            potential_coating += self.get_all_other_coatings(index - 1, (sum << 1) + 1, coating_code)
+        # done with recursion, return list
+        else:
+            potential_coating += [str((sum << 1) + 1)]
+
+        return potential_coating

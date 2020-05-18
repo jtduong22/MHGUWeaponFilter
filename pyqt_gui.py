@@ -14,7 +14,7 @@ class MHDatabaseWindow(QMainWindow):
     selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword,
                           'Hammer':Hammer, 'Lance':Lance, 'Dual Blades':DualBlades, 'Long Sword':LongSword,
                           'Charge Blade':ChargeBlade, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn,
-                          'Gunlance':Gunlance, 'Insect Glaive':InsectGlaive}
+                          'Gunlance':Gunlance, 'Insect Glaive':InsectGlaive, 'Bow':Bow}
     selected_weapon_type = SwordAndShield
     sharpness_level = 0
 
@@ -86,14 +86,16 @@ class MHDatabaseWindow(QMainWindow):
         order_by_layout = self.create_combobox_label('order by', weapon_type.HEADERS)
         layout.addLayout(order_by_layout)
 
-        layout.addLayout(self.create_sharpness_level())
+        # only add sharpness option if it's a blademaster weapon
+        if issubclass(self.selected_weapon_type, BladeMaster):
+            layout.addLayout(self.create_sharpness_level())
 
         if hasattr(weapon_type, 'CONTAINS'):
             temp = weapon_type(self.DB_LOCATION)
             temp.init_contains()
 
-            for key in HuntingHorn.CONTAINS:
-                contains_layout = self.create_contains_layout(key, HuntingHorn.CONTAINS[key])
+            for key in weapon_type.CONTAINS:
+                contains_layout = self.create_contains_layout(key, weapon_type.CONTAINS[key])
                 layout.addLayout(contains_layout)
 
     def create_sharpness_level(self) -> QHBoxLayout:
@@ -285,7 +287,7 @@ class MHDatabaseWindow(QMainWindow):
                 for c in range(grid.count()):
                     checkbox = grid.itemAt(c).widget()
                     if checkbox.isChecked():
-                        selected += pow(2,c)
+                        selected += pow(2,grid.count() - 1 - c)
                     print(checkbox.text())
 
                 print(selected)
