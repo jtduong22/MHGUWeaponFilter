@@ -22,6 +22,11 @@ class db_constants():
     SHELLING_TYPES = ["any", "Normal", "Long", "Wide"]
     COATING_TYPES = ["Power 1", "Power 2", "Element 1", "Element 2", "Close Range", "Poison", "Paralysis", "Sleep", "Exhaust", "Blast"]
     CHARGE_TYPES = ["any", "Rapid", "Pierce", "Spread", "Heavy"]
+    SHOT_TYPES = ["Normal 1", "Normal 2", "Normal 3", "Pierce 1", "Pierce 2", "Pierce 3", "Pellet 1", "Pellet 2", "Pellet 3",
+                  "Crag 1", "Crag 2", "Crag 3", "Cluster 1", "Cluster 2", "Cluster 3", "Fire", "Water", "Thunder", "Ice", "Dragon",
+                  "Poison 1", "Poison 2", "Paralysis 1", "Paralysis 2", "Sleep 1", "Sleep 2", "Exhaust 1", "Exhaust 2", "Recover 1", "Recover 2"]
+
+
 
 # wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
 class WeaponDB:

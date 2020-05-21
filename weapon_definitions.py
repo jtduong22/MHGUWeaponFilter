@@ -26,10 +26,10 @@ class PalicoWeapon(WeaponDB):
             elif filter == 'sharpness':
                 super().add_filter(f'palico_weapons.sharpness={type-1}')
 
-    # order results by column
     def order_results_by(self, type:int) -> None:
         if type > 0:
             super().order_results_by(self.WEAPON_PARAMETERS[type])
+    # order results by column
 
 # child class of WeaponDB
 # all other weapons base off this one
@@ -291,3 +291,55 @@ class Bow(HunterWeapon):
             potential_coating += [str((sum << 1) + 1)]
 
         return potential_coating
+
+class Gunner(HunterWeapon):
+    HEADERS = HunterWeapon.HEADERS + ['recoil', 'reload speed', 'deviation', 'ammo']
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['recoil', 'reload_speed', 'deviation', 'ammo']
+    CONTAINS = {'Shot Types':[]}
+
+    def __init__(self, db_location: str, weapon_table: str, columns_to_retrieve: list, weapon_type: str):
+        HunterWeapon.__init__(self, db_location, weapon_table, columns_to_retrieve, weapon_type)
+
+    def init_contains(self):
+        self.CONTAINS['Shot Types'] = db_constants.SHOT_TYPES
+
+    # filter results
+    def add_filter(self, filter: str, type: int) -> None:
+        if type > 0:
+            if filter == 'Shot Types':
+                selected_shots = []
+
+                # filter through each shot type to see what's selected
+                for i in range(len(self.CONTAINS['Shot Types'])):
+                    # left most bit is 1 (i.e shot is selected)
+                    if type % 2 == 1:
+                        selected_shots += ['_*']
+                    else:
+                        selected_shots += ['%']
+                    type = type >> 1
+
+                command = f"weapons.ammo like \"{'|'.join(reversed(selected_shots))}|%|%|\""
+                print(command)
+                super()._add_filter(command)
+
+            else:
+                super().add_filter(filter, type)
+
+class LightBowgun(Gunner):
+    # initialize parent class
+    def __init__(self, db_location:str):
+        Gunner.__init__(self, db_location, 'weapons', self.WEAPON_PARAMETERS, 'Light Bowgun')
+
+    def add_filter(self, filter: str, type: int) -> None:
+        if type > 0:
+            super().add_filter(filter, type)
+
+class HeavyBowgun(Gunner):
+    # initialize parent class
+    def __init__(self, db_location:str):
+        Gunner.__init__(self, db_location, 'weapons', self.WEAPON_PARAMETERS, 'Light Bowgun')
+
+    def add_filter(self, filter: str, type: int) -> None:
+        if type > 0:
+            super().add_filter(filter, type)
+

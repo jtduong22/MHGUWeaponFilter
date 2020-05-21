@@ -14,8 +14,8 @@ class MHDatabaseWindow(QMainWindow):
     selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword,
                           'Hammer':Hammer, 'Lance':Lance, 'Dual Blades':DualBlades, 'Long Sword':LongSword,
                           'Charge Blade':ChargeBlade, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn,
-                          'Gunlance':Gunlance, 'Insect Glaive':InsectGlaive, 'Bow':Bow}
-    selected_weapon_type = SwordAndShield
+                          'Gunlance':Gunlance, 'Insect Glaive':InsectGlaive, 'Bow':Bow, 'Light Bowgun':LightBowgun}
+    selected_weapon_type = LightBowgun
     sharpness_level = 0
 
     weapon_table = None
@@ -26,6 +26,7 @@ class MHDatabaseWindow(QMainWindow):
         # initialize main window
         QMainWindow.__init__(self)
         self.setMinimumSize(1250,600)
+        self.showMaximized()
         self.setWindowTitle("MHGU Weapon DB")
 
         # initialize main
@@ -288,7 +289,7 @@ class MHDatabaseWindow(QMainWindow):
                     checkbox = grid.itemAt(c).widget()
                     if checkbox.isChecked():
                         selected += pow(2,grid.count() - 1 - c)
-                    print(checkbox.text())
+                    # print(checkbox.text())
 
                 print(selected)
                 if selected > 0:
@@ -326,6 +327,7 @@ class MHDatabaseWindow(QMainWindow):
                     self.weapon_table.setCellWidget(x_count, y_count, item)
 
         self.weapon_table.resizeColumnsToContents()
+        self.weapon_table.resizeRowsToContents()
         # header.setStretchLastSection(True)
 
     def parse_table_item(self, item_type:str, item_index: int):
@@ -360,10 +362,11 @@ class MHDatabaseWindow(QMainWindow):
             elif item_type == 'balance type':
                 text = db_constants.BALANCE_TYPES[item_index + 1]
 
+            # list which charges the weapon has
             elif item_type == 'charges':
-                # charges = [f"{x:9}" for x in text.split('|')]
                 charges = []
-                # print(text)
+
+                # adjust each charge type to be more readable
                 for x in text.split('|'):
                     if x != '':
                         y = x.split()
@@ -373,6 +376,32 @@ class MHDatabaseWindow(QMainWindow):
                 cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
                 cell.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
+            # parse ammo string to see what ammo the gun has
+            elif item_type == 'ammo':
+                all_ammo = item_index.split('|')
+                selected_ammo = []
+                prev_ammo = 'Normal'
+
+                # cycle through each shot type
+                for count in range(len(db_constants.SHOT_TYPES)):
+                    minimum_length = 11
+                    ammo = all_ammo[count]
+                    # if ammo != '':
+                        # print(f"{db_constants.SHOT_TYPES[count]:11} {ammo}")
+                    # check if gun can naturally load that ammo type
+                    if len(ammo) > 1:
+                        ammo_name = db_constants.SHOT_TYPES[count]
+                        if prev_ammo != ammo_name.split()[0]:
+                            prev_ammo = ammo_name.split()[0]
+                            ammo_name = '\n' + ammo_name
+                            minimum_length += 1
+                        selected_ammo.append(f"{ammo_name:{minimum_length}}: {ammo.split('*')[0]:2}")
+
+                # set text to monospace
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+                cell.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                text = ', '.join(selected_ammo)
+
             # align all the numbers to the right side
             elif item_type != 'name':
                 cell.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
@@ -380,7 +409,7 @@ class MHDatabaseWindow(QMainWindow):
             # apply text
             cell.setText(str(text))
 
-        return  cell
+        return cell
 
 # Widget Class that takes in a sharpness value and draws rectangles to represent it
 class SharpnessBar(QWidget):
