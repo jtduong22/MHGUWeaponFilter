@@ -293,15 +293,18 @@ class Bow(HunterWeapon):
         return potential_coating
 
 class Gunner(HunterWeapon):
-    HEADERS = HunterWeapon.HEADERS + ['recoil', 'reload speed', 'deviation', 'ammo']
-    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS + ['recoil', 'reload_speed', 'deviation', 'ammo']
-    CONTAINS = {'Shot Types':[]}
+    HEADERS = HunterWeapon.HEADERS[0:1] + HunterWeapon.HEADERS[4:] + ['recoil', 'reload speed', 'deviation', 'ammo', 'special ammo']
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS[0:1] + HunterWeapon.WEAPON_PARAMETERS[4:] + ['recoil', 'reload_speed', 'deviation', 'ammo', 'special_ammo']
+    FILTERABLES = {x:HunterWeapon.FILTERABLES[x] for x in HunterWeapon.FILTERABLES.keys() if x != 'element' and x != 'element_attack'}
+    CONTAINS = {'Shot Types':[], 'Special Ammo':[]}
 
     def __init__(self, db_location: str, weapon_table: str, columns_to_retrieve: list, weapon_type: str):
         HunterWeapon.__init__(self, db_location, weapon_table, columns_to_retrieve, weapon_type)
 
     def init_contains(self):
         self.CONTAINS['Shot Types'] = db_constants.SHOT_TYPES
+        self.CONTAINS['Special Ammo'] = self.get_special_shots()
+        self.get_rapid_fire_shots()
 
     # filter results
     def add_filter(self, filter: str, type: int) -> None:
@@ -322,10 +325,63 @@ class Gunner(HunterWeapon):
                 print(command)
                 super()._add_filter(command)
 
+            # filter through each shot type to see what's selected
+            elif filter == 'Special Ammo':
+                selected_shots = []
+
+                # cycle through each shot type
+                for i in reversed(range(len(self.CONTAINS['Special Ammo']))):
+                    # check if shot is selected
+                    if type % 2 == 1:
+                        shot = self.CONTAINS['Special Ammo'][i]
+
+                        # add filter
+                        command = f"weapons.special_ammo like '%{shot}%'"
+                        self._add_filter(command)
+
+                    # shift bit over by one
+                    type = type >> 1
+
             else:
                 super().add_filter(filter, type)
 
+    # get list of all special shots
+    def get_special_shots(self):
+        # get all special shots combinations
+        command = "select distinct special_ammo from weapons where final == '1' and special_ammo <> ''"
+        s_shots = self._raw_execute(command)
+
+        # get only unique shots
+        parsed_shots = set()
+
+        # cycle through all loadouts to get
+        for shots in s_shots:
+            for shot in shots[0].split('*'):
+                shot = shot.split(':')[0]
+                parsed_shots.add(shot)
+
+        return sorted(parsed_shots)
+
+    # get all rapid_fire_shots
+    def get_rapid_fire_shots(self):
+        command = "select distinct rapid_fire from weapons where final == '1' and wtype == 'Light Bowgun'"
+        r_shots = self._raw_execute(command)
+
+        parsed_shots = set()
+
+        # retrieve all shot rapid fire shot types
+        for shots in r_shots:
+            for shot in shots[0].split('*'):
+                shot = shot.split(':')[0]
+                parsed_shots.add(shot)
+
+        # return list in alphabetical order
+        return sorted(parsed_shots)
+
 class LightBowgun(Gunner):
+    HEADERS = Gunner.HEADERS + ['rapid fire']
+    WEAPON_PARAMETERS = Gunner.WEAPON_PARAMETERS + ['rapid_fire']
+
     # initialize parent class
     def __init__(self, db_location:str):
         Gunner.__init__(self, db_location, 'weapons', self.WEAPON_PARAMETERS, 'Light Bowgun')

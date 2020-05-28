@@ -66,8 +66,6 @@ class WeaponDB:
 
         return self._raw_execute(command)
 
-
-
     # prints results into command line`
     def print_results(self, cursor:sql.Cursor) -> None:
         # temporary function that takes string and int and adds padding to the end

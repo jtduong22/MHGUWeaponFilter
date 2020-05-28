@@ -377,6 +377,7 @@ class MHDatabaseWindow(QMainWindow):
                 cell.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
 
             # parse ammo string to see what ammo the gun has
+            # keeps ammo in same family on same line
             elif item_type == 'ammo':
                 all_ammo = item_index.split('|')
                 selected_ammo = []
@@ -386,8 +387,7 @@ class MHDatabaseWindow(QMainWindow):
                 for count in range(len(db_constants.SHOT_TYPES)):
                     minimum_length = 11
                     ammo = all_ammo[count]
-                    # if ammo != '':
-                        # print(f"{db_constants.SHOT_TYPES[count]:11} {ammo}")
+
                     # check if gun can naturally load that ammo type
                     if len(ammo) > 1:
                         ammo_name = db_constants.SHOT_TYPES[count]
@@ -401,6 +401,25 @@ class MHDatabaseWindow(QMainWindow):
                 cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
                 cell.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
                 text = ', '.join(selected_ammo)
+
+            # parse special ammo to be readable
+            elif item_type == 'special ammo':
+                all_ammo = item_index.split('*')
+                text = '\n'.join(all_ammo)
+
+                # set text to monospace
+                cell.setTextAlignment(Qt.AlignLeft | Qt.AlignTop)
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+
+
+            # prase rapid fire shots to be readable
+            elif item_type == 'rapid fire':
+                rapid_shots = item_index.split('*')
+                text = '\n'.join(rapid_shots)
+
+                # set text to monospace
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+                cell.setTextAlignment(Qt.AlignLeft | Qt.AlignTop)
 
             # align all the numbers to the right side
             elif item_type != 'name':
