@@ -1,9 +1,10 @@
 import sys
-from PyQt5.QtGui import *
+from PyQt5.QtGui import QColor, QPainter, QIcon, QFontDatabase, QPen, QBrush
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
 
 from weapon_definitions import *
+from CollapsibleWidget import CollapsibleWidget
 
 class MHDatabaseWindow(QMainWindow):
 #### Class Constants ####
@@ -14,8 +15,8 @@ class MHDatabaseWindow(QMainWindow):
     selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword,
                           'Hammer':Hammer, 'Lance':Lance, 'Dual Blades':DualBlades, 'Long Sword':LongSword,
                           'Charge Blade':ChargeBlade, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn,
-                          'Gunlance':Gunlance, 'Insect Glaive':InsectGlaive, 'Bow':Bow, 'Light Bowgun':LightBowgun}
-    selected_weapon_type = LightBowgun
+                          'Gunlance':Gunlance, 'Insect Glaive':InsectGlaive, 'Bow':Bow, 'Light Bowgun':LightBowgun, 'Heavy Bowgun':HeavyBowgun}
+    selected_weapon_type = SwordAndShield
     sharpness_level = 0
 
     weapon_table = None
@@ -96,8 +97,8 @@ class MHDatabaseWindow(QMainWindow):
             temp.init_contains()
 
             for key in weapon_type.CONTAINS:
-                contains_layout = self.create_contains_layout(key, weapon_type.CONTAINS[key])
-                layout.addLayout(contains_layout)
+                contains_layout = self.create_contains_widget(key, weapon_type.CONTAINS[key])
+                layout.addWidget(contains_layout)
 
     def create_sharpness_level(self) -> QHBoxLayout:
         layout = QHBoxLayout(self)
@@ -115,11 +116,11 @@ class MHDatabaseWindow(QMainWindow):
         radio_group.itemAt(0).widget().setChecked(True)
         return layout
 
-    def create_contains_layout(self, label_text: str, content: list) -> QLayout:
-        layout = QVBoxLayout(self)
+    def create_contains_layout(self, content: list) -> QLayout:
+        # layout = QVBoxLayout(self)
 
-        description_label = QLabel(f"{label_text}", self)
-        layout.addWidget(description_label)
+        # description_label = QLabel(f"{label_text}", self)
+        # layout.addWidget(description_label)
 
         # create new layout for checkmarks
         checkbox_layout = QGridLayout(self)
@@ -138,10 +139,17 @@ class MHDatabaseWindow(QMainWindow):
             checkbox.setChecked(False)
             checkbox_layout.addWidget(checkbox,y,x)
 
-        layout.addLayout(checkbox_layout)
+        # layout.addLayout(checkbox_layout)
 
-        return layout
+        return checkbox_layout
 
+    def create_contains_widget(self, label_text: str, content: list):
+        widget = CollapsibleWidget(label_text)
+
+        widget.add_layout(self.create_contains_layout(content))
+        widget.set_hidden(True)
+
+        return widget
 
     # initializes the settings dialog
     def create_settings_dialog(self) -> None:
@@ -255,35 +263,42 @@ class MHDatabaseWindow(QMainWindow):
     # read selected options and applies to database
     def get_selected_options(self, db: WeaponDB) -> None:
         # cycle through each option
-        for child in self.weapon_filter_layout.children():
-            # parse data
-            label = child.itemAt(0).widget()
-            combobox = child.itemAt(1).widget()
-            print(label.text())
+        print(f"weapon_filter_layout has {self.weapon_filter_layout.children()} {self.weapon_filter_layout.count()}children")
+        # print(self.weapon_filter_layout.itemAt(2).widget())
+        for c in range(self.weapon_filter_layout.count()):
+            print(c)
+            child = self.weapon_filter_layout.itemAt(c).widget()
+            print(type(child))
 
-            # parse combobox
-            if isinstance(combobox, QComboBox):
-                print(combobox.currentIndex())
+            if isinstance(child, QLayout):
+                # parse data
+                label = child.itemAt(0).widget()
+                combobox = child.itemAt(1).widget()
+                print(label.text())
 
-                # order by
-                if label.text() == 'order by':
-                    db.order_results_by(combobox.currentIndex())
-                # filter by
-                else:
-                    db.add_filter(label.text(), combobox.currentIndex())
+                # parse combobox
+                if isinstance(combobox, QComboBox):
+                    print(combobox.currentIndex())
 
-            # parse Sharpness Level radio buttons
-            elif label.text() == 'Sharpness Level':
-                radio_group = child.itemAt(1)
-                for c in range(radio_group.count()):
-                    radio_button = radio_group.itemAt(c).widget()
-                    if radio_button.isChecked():
-                        self.sharpness_level = int(radio_button.text().split('+')[1])
-                        break
+                    # order by
+                    if label.text() == 'order by':
+                        db.order_results_by(combobox.currentIndex())
+                    # filter by
+                    else:
+                        db.add_filter(label.text(), combobox.currentIndex())
+
+                # parse Sharpness Level radio buttons
+                elif label.text() == 'Sharpness Level':
+                    radio_group = child.itemAt(1)
+                    for c in range(radio_group.count()):
+                        radio_button = radio_group.itemAt(c).widget()
+                        if radio_button.isChecked():
+                            self.sharpness_level = int(radio_button.text().split('+')[1])
+                            break
 
             # parse Horn / Shots
-            else:
-                grid = child.itemAt(1)
+            if isinstance(child, CollapsibleWidget):
+                grid = child.get_item_at(0)
                 selected = 0
                 for c in range(grid.count()):
                     checkbox = grid.itemAt(c).widget()
@@ -293,7 +308,7 @@ class MHDatabaseWindow(QMainWindow):
 
                 print(selected)
                 if selected > 0:
-                    db.add_filter(label.text(), selected)
+                    db.add_filter(child.get_text(), selected)
 
     # populate table with results from database query
     def fill_table(self, displayed: dict, results: list) -> None:
@@ -404,18 +419,44 @@ class MHDatabaseWindow(QMainWindow):
 
             # parse special ammo to be readable
             elif item_type == 'special ammo':
+                text = ''
                 all_ammo = item_index.split('*')
-                text = '\n'.join(all_ammo)
+                for ammo in all_ammo:
+                    name, capacity, clip_size = ammo.split(':')
+                    text += f"{name:15} [total: {capacity:2}, clip size: {clip_size:2}]\n"
 
                 # set text to monospace
                 cell.setTextAlignment(Qt.AlignLeft | Qt.AlignTop)
                 cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
 
-
-            # prase rapid fire shots to be readable
+            # parse rapid fire shots to be readable
             elif item_type == 'rapid fire':
+                text = ''
                 rapid_shots = item_index.split('*')
-                text = '\n'.join(rapid_shots)
+                for shot in rapid_shots:
+                    print(f"shot: {shot}")
+                    if shot != '':
+                        name, shot_count, percent, delay = shot.split(':')
+                        if delay == '0':
+                            delay = 'Short'
+                        elif delay == '1':
+                            delay = 'Medium'
+                        else:
+                            delay = 'Long'
+                        text += f'{name:15} | {shot_count} shots | {percent:3}% | {delay} delay\n'
+                # text = '\n'.join(rapid_shots)
+
+                # set text to monospace
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+                cell.setTextAlignment(Qt.AlignLeft | Qt.AlignTop)
+
+            elif item_type == 'siege fire':
+                text = ''
+                siege_shots = item_index.split('*')
+                for shot in siege_shots:
+                    if shot != '':
+                        name, capacity = shot.split(':')
+                        text += f'{name:15} | {capacity} shots\n'
 
                 # set text to monospace
                 cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
