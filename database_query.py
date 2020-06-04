@@ -13,59 +13,42 @@ class db_constants():
 
     ELEMENT_TYPES = ["any", "fire", "water", "thunder", "ice", "dragon", "poison", "sleep", "paralysis", "blastblight"]
 
-    SHARPNESS_TYPES = ["any", "red", "yellow", "green", "blue", "white", "purple"]
-    SHARPNESS_TO_RGB = {x:y for x,y in zip(SHARPNESS_TYPES, [[0,0,0], [200, 0, 0], [200, 200, 0], [0, 200, 0], [0, 0, 200], [200, 200, 200], [200, 0, 200]])}
+    SHARPNESS_TYPES = ["any", "red", "orange", "yellow", "green", "blue", "white", "purple"]
+    SHARPNESS_TO_RGB = {x:y for x,y in zip(SHARPNESS_TYPES, [[0,0,0], [200, 0, 0], [200,131, 0], [200, 200, 0], [0, 200, 0], [0, 0, 200], [200, 200, 200], [200, 0, 200]])}
     SHA_TO_INDEX = list_to_index_converter(SHARPNESS_TYPES)
 
-    ORDER_BY_TYPES = {'name': 'name', 'rarity':'rarity', 'attack (melee)': 'attack_melee', 'attack (ranged)': 'attack_ranged',
-                      'element': 'element', 'element (melee)': 'element_melee', 'element (ranged)': 'element_ranged',
-                      'defense': 'defense', 'sharpness': 'sharpness', 'affinity (melee)': 'affinity_melee',
-                      'affinity (ranged)': 'affinity_ranged', 'blunt': 'blunt', 'balance type': 'balance'}
+    PHIAL_TYPES = ["any", "power", "dragon", "exhaust", "element", "poison", "paralysis", "impact"]
+    # SHELLING_TYPES = ["any"] + [f"{x} {y}" for x in ["Normal", "Long", "Wide"] for y in ['', '1', '2', '3', '4', '5'] ]
+    SHELLING_TYPES = ["any", "Normal", "Long", "Wide"]
+    COATING_TYPES = ["Power 1", "Power 2", "Element 1", "Element 2", "Close Range", "Poison", "Paralysis", "Sleep", "Exhaust", "Blast"]
+    CHARGE_TYPES = ["any", "Rapid", "Pierce", "Spread", "Heavy"]
+    SHOT_TYPES = ["Normal 1", "Normal 2", "Normal 3", "Pierce 1", "Pierce 2", "Pierce 3", "Pellet 1", "Pellet 2", "Pellet 3",
+                  "Crag 1", "Crag 2", "Crag 3", "Cluster 1", "Cluster 2", "Cluster 3", "Fire", "Water", "Thunder", "Ice", "Dragon",
+                  "Poison 1", "Poison 2", "Paralysis 1", "Paralysis 2", "Sleep 1", "Sleep 2", "Exhaust 1", "Exhaust 2", "Recover 1", "Recover 2"]
+
+
 
 # wrapper class that filters and retrieves results from the Monster Hunter Generations Ultimate database
-class weapon_db:
-    def __init__(self, db_location:str):
+class WeaponDB:
+    def __init__(self, db_location:str, weapon_table:str, columns_to_retrieve: list):
         self.db = sql.connect(db_location)
-        self.displayed_options = ', palico_weapons.attack_melee, palico_weapons.attack_ranged, palico_weapons.element, palico_weapons.element_melee, palico_weapons.element_ranged, palico_weapons.defense, palico_weapons.sharpness, palico_weapons.affinity_melee, palico_weapons.affinity_ranged, palico_weapons.blunt, palico_weapons.balance'
+        self.weapon_table = weapon_table
+        self.displayed_options = columns_to_retrieve
         self.additional_filters = ''
         self.results_order = 'order by items.name '
 
-    # adds filter for damage type (cutting, blunt)
-    def add_damage_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f'and palico_weapons.blunt={type-1} '
-
-    # adds filter for balance type (balanced, melee, boomerang)
-    def add_balance_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f'and palico_weapons.balance={type-1} '
-
-    # adds filter for element type (fire, water, thunder, ice, dragon, poison, sleep, paralysis, blastblight)
-    def add_element_type_filter(self, type:int) -> None:
-        if type > 0:
-            self.additional_filters += f"and palico_weapons.element='{db_constants.ELEMENT_TYPES[type].capitalize()}' "
-
-    # adds filter for sharpness type (red, yellow, green, blue, white, purple)
-    def add_sharpness_filter(self, type:int):
-        if type > 0:
-            self.additional_filters += f"and palico_weapons.sharpness={type} "
-
     # order results by specified column (name, rarity, attack (melee), attack (ranged), element, sharpness, affinity (melee), affinty (ranged), blunt, balance type)
     # ordered by name by default
-    def order_results_by(self, type:int) -> None:
-        if type > 0:
-            key = list(db_constants.ORDER_BY_TYPES.keys())[type]
-            self.results_order = f'order by {db_constants.ORDER_BY_TYPES[key]} desc, name asc'
+    def order_results_by(self, type:str) -> None:
+        if type == 'affinity':
+            type = 'cast(affinity as integer)'
+        self.results_order = f'order by {type} desc, name asc'
+
+    def add_filter(self, filter:str):
+        self.additional_filters += f'and {filter} '
 
     # gets results from database
-    def execute(self) -> list:
-        # adds selected options
-        command = f"select items.name, items.rarity{self.displayed_options} "
-        command += f"from items, palico_weapons where items._id = palico_weapons._id  {self.additional_filters}"
-        command += f" {self.results_order}"
-
-        print(f"\n{command}")
-
+    def _raw_execute(self, command) -> list:
         # execute and retrieve results from sql command
         cursor = self.db.execute(command)
         results = list(cursor.fetchall())
@@ -73,7 +56,17 @@ class weapon_db:
         # return results
         return results
 
-    # prints results into command line
+    def execute(self) -> list:
+        # adds selected options
+        command = f"select {', '.join(self.displayed_options)} "
+        command += f"from items, {self.weapon_table} where items._id = {self.weapon_table}._id  {self.additional_filters}"
+        command += f" {self.results_order}"
+
+        print(f"\n{command}")
+
+        return self._raw_execute(command)
+
+    # prints results into command line`
     def print_results(self, cursor:sql.Cursor) -> None:
         # temporary function that takes string and int and adds padding to the end
         print_formatted = lambda text, space: (print(f"{text.center(max(space, len(text)))}", end=" | "))
@@ -95,6 +88,3 @@ class weapon_db:
                 print_formatted(text, pad)
 
             print()
-
-if __name__ == '__main__':
-    print(db_constants.ORDER_BY_TYPES)

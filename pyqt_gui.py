@@ -1,22 +1,23 @@
 import sys
-from PyQt5.QtGui import *
+from PyQt5.QtGui import QColor, QPainter, QIcon, QFontDatabase, QPen, QBrush
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
+from PyQt5.QtCore import Qt
 
-from database_query import *
+from weapon_definitions import *
+from CollapsibleWidget import CollapsibleWidget
 
 class MHDatabaseWindow(QMainWindow):
 #### Class Constants ####
     IMAGE_LOCATION = './Images/'
-
+    DB_LOCATION = './Data/mhgu.db'
 #### Class variables ####
-    enabled_settings = {x:True for x in db_constants.ORDER_BY_TYPES.keys()}
-
-    damage_type_combobox = None
-    balance_layout_combobox = None
-    element_layout_combobox = None
-    sharpness_layout_combobox = None
-    order_layout_combobox = None
+    enabled_settings = {}
+    selectable_weapons = {'Palico':PalicoWeapon, 'Sword and Shield':SwordAndShield, 'Great Sword':GreatSword,
+                          'Hammer':Hammer, 'Lance':Lance, 'Dual Blades':DualBlades, 'Long Sword':LongSword,
+                          'Charge Blade':ChargeBlade, 'Switch Axe':SwitchAxe, 'Hunting Horn':HuntingHorn,
+                          'Gunlance':Gunlance, 'Insect Glaive':InsectGlaive, 'Bow':Bow, 'Light Bowgun':LightBowgun, 'Heavy Bowgun':HeavyBowgun}
+    selected_weapon_type = SwordAndShield
+    sharpness_level = 0
 
     weapon_table = None
 
@@ -25,64 +26,130 @@ class MHDatabaseWindow(QMainWindow):
     def __init__(self):
         # initialize main window
         QMainWindow.__init__(self)
-        self.setMinimumSize(1250,400)
+        self.setMinimumSize(1250,600)
+        self.showMaximized()
         self.setWindowTitle("MHGU Weapon DB")
 
         # initialize main
-        test_widget = QWidget(self)
-        self.setCentralWidget(test_widget)
-        test_widget.adjustSize()
+        main_widget = QWidget(self)
+        self.setCentralWidget(main_widget)
+        main_widget.adjustSize()
 
         # create layout? (required for alignment to work)
-        test_layout = QVBoxLayout(self)
-        test_widget.setLayout(test_layout)
+        main_layout = QVBoxLayout(self)
+        main_widget.setLayout(main_layout)
 
         # create settings button
         displayed_settings_button = QPushButton("Settings", self)
         displayed_settings_button.clicked.connect(self.create_settings_dialog)
-        test_layout.addWidget(displayed_settings_button, alignment=Qt.AlignRight)
+        main_layout.addWidget(displayed_settings_button, alignment=Qt.AlignRight)
+
+        # create combobox for selecting weapon type
+        select_weapons_combobox = QComboBox(self)
+        select_weapons_combobox.addItems(list(self.selectable_weapons.keys()))
+        index = list(self.selectable_weapons.values()).index(self.selected_weapon_type)
+        select_weapons_combobox.setCurrentIndex(index)
+        select_weapons_combobox.currentTextChanged.connect(self.weapon_changed)
+        main_layout.addWidget(select_weapons_combobox, alignment=Qt.AlignRight)
+
+        self.enabled_settings = {x:True for x in self.selected_weapon_type.HEADERS}
 
         label = QLabel("MHGU Filter", self)
         label.setAlignment(Qt.AlignHCenter)
-        test_layout.addWidget(label)
+        main_layout.addWidget(label)
 
-        # create comboboxes
-
-        damage_layout = self.create_combobox_label("Damage Type: ", db_constants.DAMAGE_TYPES)
-        balance_layout = self.create_combobox_label("Balance Type: ", db_constants.BALANCE_TYPES)
-        element_layout = self.create_combobox_label("Element Type: ", db_constants.ELEMENT_TYPES)
-        sharpness_layout = self.create_combobox_label("Sharpness: ", db_constants.SHARPNESS_TYPES)
-        order_layout = self.create_combobox_label("Order By: ", db_constants.ORDER_BY_TYPES)
-
-        # add combobox to application
-
-        test_layout.addLayout(damage_layout)
-        test_layout.addLayout(balance_layout)
-        test_layout.addLayout(element_layout)
-        test_layout.addLayout(sharpness_layout)
-        test_layout.addLayout(order_layout)
-
-        # set reference to combobox
-
-        self.damage_type_combobox = damage_layout.itemAt(1).widget()
-        self.balance_layout_combobox = balance_layout.itemAt(1).widget()
-        self.element_layout_combobox = element_layout.itemAt(1).widget()
-        self.sharpness_layout_combobox = sharpness_layout.itemAt(1).widget()
-        self.order_layout_combobox = order_layout.itemAt(1).widget()
+        # create sublayout for selected weapon
+        # layout changes from weapon to weapon
+        self.weapon_filter_layout = QVBoxLayout()
+        self.create_weapon_layout(self.weapon_filter_layout, self.selected_weapon_type)
+        main_layout.addLayout(self.weapon_filter_layout)
 
         # add table
         self.weapon_table = QTableWidget(self)
-        test_layout.addWidget(self.weapon_table)
+        main_layout.addWidget(self.weapon_table)
 
         # create read all actions button
         read_button = QPushButton("Search")
         read_button.clicked.connect(self.search)
-        test_layout.addWidget(read_button, alignment=Qt.AlignBottom)
+        main_layout.addWidget(read_button, alignment=Qt.AlignBottom)
 
         # create close button
         quit_button = QPushButton("Close application", self)
         quit_button.clicked.connect(self.close)
-        test_layout.addWidget(quit_button, alignment=Qt.AlignBottom)
+        main_layout.addWidget(quit_button, alignment=Qt.AlignBottom)
+
+    # fills layout with relevant comboboxes
+    # differs from weapon to weapon
+    def create_weapon_layout(self, layout, weapon_type:WeaponDB):
+        # cycle through each filter and populate with respective options
+        for filter in weapon_type.FILTERABLES:
+            combobox_layout = self.create_combobox_label(filter, weapon_type.FILTERABLES[filter])
+            layout.addLayout(combobox_layout)
+        order_by_layout = self.create_combobox_label('order by', weapon_type.HEADERS)
+        layout.addLayout(order_by_layout)
+
+        # only add sharpness option if it's a blademaster weapon
+        if issubclass(self.selected_weapon_type, BladeMaster):
+            layout.addLayout(self.create_sharpness_level())
+
+        if hasattr(weapon_type, 'CONTAINS'):
+            temp = weapon_type(self.DB_LOCATION)
+            temp.init_contains()
+
+            for key in weapon_type.CONTAINS:
+                contains_layout = self.create_contains_widget(key, weapon_type.CONTAINS[key])
+                layout.addWidget(contains_layout)
+
+    def create_sharpness_level(self) -> QHBoxLayout:
+        layout = QHBoxLayout(self)
+        label = QLabel("Sharpness Level")
+        label.setAlignment(Qt.AlignRight)
+        layout.addWidget(label)
+
+
+        radio_group = QHBoxLayout(self)
+        radio_group.setAlignment(Qt.AlignHCenter)
+        layout.addLayout(radio_group)
+        for i in range(3):
+            radio_button = QRadioButton(f"Sharpness+{i}")
+            radio_group.addWidget(radio_button)
+        radio_group.itemAt(0).widget().setChecked(True)
+        return layout
+
+    def create_contains_layout(self, content: list) -> QLayout:
+        # layout = QVBoxLayout(self)
+
+        # description_label = QLabel(f"{label_text}", self)
+        # layout.addWidget(description_label)
+
+        # create new layout for checkmarks
+        checkbox_layout = QGridLayout(self)
+
+        # create checkboxes for each selectable option
+        # default row size is 7
+        row_size = 7
+
+        for count, text in enumerate(content):
+            # get position of item
+            x = count % row_size
+            y = count // row_size
+
+            # create checkbox
+            checkbox = QCheckBox(text, self)
+            checkbox.setChecked(False)
+            checkbox_layout.addWidget(checkbox,y,x)
+
+        # layout.addLayout(checkbox_layout)
+
+        return checkbox_layout
+
+    def create_contains_widget(self, label_text: str, content: list):
+        widget = CollapsibleWidget(label_text)
+
+        widget.add_layout(self.create_contains_layout(content))
+        widget.set_hidden(True)
+
+        return widget
 
     # initializes the settings dialog
     def create_settings_dialog(self) -> None:
@@ -103,8 +170,8 @@ class MHDatabaseWindow(QMainWindow):
         row_size = 3
         for count, key in enumerate(self.enabled_settings.keys()):
             # get position of item
-            x = count % 3
-            y = count // 3
+            x = count % row_size
+            y = count // row_size
 
             # create checkbox
             checkbox = QCheckBox(key, self)
@@ -122,6 +189,37 @@ class MHDatabaseWindow(QMainWindow):
         # show dialog
         dialog.exec_()
 
+    # callback when weapon is changed
+    # clears the comboboxes from the weapon_filter_layout and replaces them with ones relevant to the weapon
+    def weapon_changed(self, selected_weapon:str) -> None:
+        # get class of selected weapon type
+        self.selected_weapon_type = self.selectable_weapons[selected_weapon]
+
+        # get settings
+        self.enabled_settings = {x:True for x in self.selected_weapon_type.HEADERS}
+
+        # clear previous comboboxes
+        self.clear_layout(self.weapon_filter_layout)
+
+        # fill with new comboboxes
+        self.create_weapon_layout(self.weapon_filter_layout, self.selected_weapon_type)
+
+        # clear contents
+        self.weapon_table.clear()
+
+    # recursively clear layout
+    def clear_layout(self, layout:QLayout) -> None:
+        # while not empty
+        while layout.count():
+            item = layout.takeAt(0)
+            widget = item.widget()
+
+            # delete if widget, delete stuff inside if layout
+            if widget is not None:
+                widget.deleteLater()
+            else:
+                self.clear_layout(item.layout())
+
     # callback when option is selected, changes the settings
     def option_selected(self) -> None:
         # get information about which checkbox
@@ -133,7 +231,7 @@ class MHDatabaseWindow(QMainWindow):
         self.enabled_settings[option] = is_enabled
 
     # quickly create combobox with label next to it
-    def create_combobox_label(self, label_text:str, drop_content: list) -> QLayout:
+    def create_combobox_label(self, label_text: str, drop_content: list) -> QLayout:
         layout = QHBoxLayout(self)
         label = QLabel(label_text, self)
         label.setAlignment(Qt.AlignRight)
@@ -149,8 +247,9 @@ class MHDatabaseWindow(QMainWindow):
     # search database for results
     def search(self) -> None:
         # open database
-        location = './Data/mhgu.db'
-        db = weapon_db(location)
+        db = self.selected_weapon_type(self.DB_LOCATION)
+        if hasattr(db, 'CONTAINS'):
+            db.init_contains()
 
         # apply selected filters to database
         self.get_selected_options(db)
@@ -161,29 +260,62 @@ class MHDatabaseWindow(QMainWindow):
         # fill table
         self.fill_table(self.enabled_settings, results)
 
-
     # read selected options and applies to database
-    def get_selected_options(self, db: weapon_db) -> None:
-        # read selected option of all the comboboxes
-        d_type_selection = self.damage_type_combobox.currentIndex()  # damage type: any, cutting, blunt
-        b_type_selection = self.balance_layout_combobox.currentIndex()  # balance type: any, balanced, melee, boomerang
-        e_type_selection = self.element_layout_combobox.currentIndex()  # element type: any, fire, water, thunder, ice, dragon, poison, sleep, paralysis, blastblight
-        s_type_selection = self.sharpness_layout_combobox.currentIndex()  # sharpness type: any, red, yellow, green, blue, white, purple
-        o_type_selection = self.order_layout_combobox.currentIndex()  # order by type: name, rarity, attack (melee), attack (ranged), element, sharpness, affinity (melee), affinty (ranged), blunt, balance type
+    def get_selected_options(self, db: WeaponDB) -> None:
+        # cycle through each option
+        print(f"weapon_filter_layout has {self.weapon_filter_layout.children()} {self.weapon_filter_layout.count()}children")
+        # print(self.weapon_filter_layout.itemAt(2).widget())
+        for c in range(self.weapon_filter_layout.count()):
+            print(c)
+            child = self.weapon_filter_layout.itemAt(c).widget()
+            print(type(child))
 
-        # add filters to database
-        db.add_damage_type_filter(d_type_selection)
-        db.add_balance_type_filter(b_type_selection)
-        db.add_element_type_filter(e_type_selection)
-        db.add_sharpness_filter(s_type_selection)
-        db.order_results_by(o_type_selection)
+            if isinstance(child, QLayout):
+                # parse data
+                label = child.itemAt(0).widget()
+                combobox = child.itemAt(1).widget()
+                print(label.text())
+
+                # parse combobox
+                if isinstance(combobox, QComboBox):
+                    print(combobox.currentIndex())
+
+                    # order by
+                    if label.text() == 'order by':
+                        db.order_results_by(combobox.currentIndex())
+                    # filter by
+                    else:
+                        db.add_filter(label.text(), combobox.currentIndex())
+
+                # parse Sharpness Level radio buttons
+                elif label.text() == 'Sharpness Level':
+                    radio_group = child.itemAt(1)
+                    for c in range(radio_group.count()):
+                        radio_button = radio_group.itemAt(c).widget()
+                        if radio_button.isChecked():
+                            self.sharpness_level = int(radio_button.text().split('+')[1])
+                            break
+
+            # parse Horn / Shots
+            if isinstance(child, CollapsibleWidget):
+                grid = child.get_item_at(0)
+                selected = 0
+                for c in range(grid.count()):
+                    checkbox = grid.itemAt(c).widget()
+                    if checkbox.isChecked():
+                        selected += pow(2,grid.count() - 1 - c)
+                    # print(checkbox.text())
+
+                print(selected)
+                if selected > 0:
+                    db.add_filter(child.get_text(), selected)
 
     # populate table with results from database query
     def fill_table(self, displayed: dict, results: list) -> None:
 
         # select only data enabled for viewing
-        headers = [x for x in displayed.keys() if displayed[x] == True]
-        data = [x for x,y in enumerate(displayed.keys()) if displayed[y] == True]   # creates list of indexes of displayed features to cycle through
+        headers = [x for x in displayed.keys() if displayed[x] is True]
+        data = [x for x,y in enumerate(displayed.keys()) if displayed[y] is True]   # creates list of indexes of displayed features to cycle through
 
         # get size of table
         column_count = len(data)
@@ -203,22 +335,32 @@ class MHDatabaseWindow(QMainWindow):
                 # add info to the cell
                 item = self.parse_table_item(headers[y_count], row[column])
 
-                # add cell to table at position x,y
-                self.weapon_table.setItem(x_count, y_count, item)
+                if type(item) is QTableWidgetItem:
+                    # add cell to table at position x,y
+                    self.weapon_table.setItem(x_count, y_count, item)
+                else:
+                    self.weapon_table.setCellWidget(x_count, y_count, item)
 
         self.weapon_table.resizeColumnsToContents()
+        self.weapon_table.resizeRowsToContents()
+        # header.setStretchLastSection(True)
 
     def parse_table_item(self, item_type:str, item_index: int):
         cell = QTableWidgetItem()
 
         # change background color to match sharpness
         if item_type == 'sharpness':
-            sharpness_type = db_constants.SHARPNESS_TYPES[item_index]   # get sharpness type
-            color = db_constants.SHARPNESS_TO_RGB[sharpness_type]       # get RGB color
-            cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
+            if self.selected_weapon_type is PalicoWeapon:
+                sharpness_type = db_constants.SHARPNESS_TYPES[item_index + 1]   # get sharpness type
+                color = db_constants.SHARPNESS_TO_RGB[sharpness_type]       # get RGB color
+                cell.setBackground(QColor(color[0], color[1], color[2]))    # set background color
+            else:
+                cell = SharpnessBar(item_index.split()[self.sharpness_level])
+                cell.setMinimumWidth(45 * SharpnessBar.WIDTH_MULTIPLIER)
+                # print(item_index)
 
         # add icon to cell
-        elif item_type == 'element':
+        elif item_type == 'element' or item_type == 'element 2':
             picture_location = self.IMAGE_LOCATION + item_index.lower() + '.png'
             icon = QIcon(picture_location)
             cell.setIcon(icon)
@@ -228,12 +370,97 @@ class MHDatabaseWindow(QMainWindow):
             text = item_index
 
             # replace number with 'cutting' or 'blunt'
-            if item_type == 'blunt':
+            if item_type == 'damage type':
                 text = db_constants.DAMAGE_TYPES[item_index + 1]
 
             # replace number with 'balanced', 'melee', or 'boomerang
             elif item_type == 'balance type':
                 text = db_constants.BALANCE_TYPES[item_index + 1]
+
+            # list which charges the weapon has
+            elif item_type == 'charges':
+                charges = []
+
+                # adjust each charge type to be more readable
+                for x in text.split('|'):
+                    if x != '':
+                        y = x.split()
+                        charges += [f"{y[0]:6} {y[1]:2}"]
+
+                text = ' | '.join(charges)
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+                cell.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+
+            # parse ammo string to see what ammo the gun has
+            # keeps ammo in same family on same line
+            elif item_type == 'ammo':
+                all_ammo = item_index.split('|')
+                selected_ammo = []
+                prev_ammo = 'Normal'
+
+                # cycle through each shot type
+                for count in range(len(db_constants.SHOT_TYPES)):
+                    minimum_length = 11
+                    ammo = all_ammo[count]
+
+                    # check if gun can naturally load that ammo type
+                    if len(ammo) > 1:
+                        ammo_name = db_constants.SHOT_TYPES[count]
+                        if prev_ammo != ammo_name.split()[0]:
+                            prev_ammo = ammo_name.split()[0]
+                            ammo_name = '\n' + ammo_name
+                            minimum_length += 1
+                        selected_ammo.append(f"{ammo_name:{minimum_length}}: {ammo.split('*')[0]:2}")
+
+                # set text to monospace
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+                cell.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                text = ', '.join(selected_ammo)
+
+            # parse special ammo to be readable
+            elif item_type == 'special ammo':
+                text = ''
+                all_ammo = item_index.split('*')
+                for ammo in all_ammo:
+                    name, capacity, clip_size = ammo.split(':')
+                    text += f"{name:15} [total: {capacity:2}, clip size: {clip_size:2}]\n"
+
+                # set text to monospace
+                cell.setTextAlignment(Qt.AlignLeft | Qt.AlignTop)
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+
+            # parse rapid fire shots to be readable
+            elif item_type == 'rapid fire':
+                text = ''
+                rapid_shots = item_index.split('*')
+                for shot in rapid_shots:
+                    print(f"shot: {shot}")
+                    if shot != '':
+                        name, shot_count, percent, delay = shot.split(':')
+                        if delay == '0':
+                            delay = 'Short'
+                        elif delay == '1':
+                            delay = 'Medium'
+                        else:
+                            delay = 'Long'
+                        text += f'{name:15} | {shot_count} shots | {percent:3}% | {delay} delay\n'
+                # text = '\n'.join(rapid_shots)
+
+                # set text to monospace
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+                cell.setTextAlignment(Qt.AlignLeft | Qt.AlignTop)
+
+            elif item_type == 'siege fire':
+                text = ''
+                siege_shots = item_index.split('*')
+                for shot in siege_shots:
+                    if shot != '':
+                        name, capacity = shot.split(':')
+                        text += f'{name:15} | {capacity} shots\n'
+
+                # set text to monospace
+                cell.setFont(QFontDatabase.systemFont(QFontDatabase.FixedFont))
+                cell.setTextAlignment(Qt.AlignLeft | Qt.AlignTop)
 
             # align all the numbers to the right side
             elif item_type != 'name':
@@ -242,12 +469,51 @@ class MHDatabaseWindow(QMainWindow):
             # apply text
             cell.setText(str(text))
 
-        return  cell
+        return cell
 
+# Widget Class that takes in a sharpness value and draws rectangles to represent it
+class SharpnessBar(QWidget):
+    COLORS = [db_constants.SHARPNESS_TO_RGB[x] for x in db_constants.SHARPNESS_TYPES if x != 'any']
+    HEIGHT = 30
+    WIDTH_MULTIPLIER = 2
+
+    # init, takes in a sharpness string from database
+    def __init__(self, sharpness_str):
+        super().__init__()
+
+        # convert string to list
+        self.sharpness = [int(x) for x in sharpness_str.split('.')]
+        # print(self.sharpness)
+
+    # draw the rectangles
+    def paintEvent(self,e):
+        p = QPainter(self)
+        self.width = 0
+        # keep track of position of xpos
+        # i.e place next rectangle on the very right side
+        x_pos = 0
+        for s, c in zip(self.sharpness, self.COLORS):
+            # don't create anything if sharpness is 0
+            if s == 0:
+                continue
+
+            self.width += s * self.WIDTH_MULTIPLIER
+
+            # get color
+            color = QColor(c[0], c[1], c[2])
+
+            # set color
+            p.setPen(QPen(color))
+            p.setBrush(QBrush(color, Qt.SolidPattern))
+
+            # draw rectangle
+            p.drawRect(x_pos, 0, s * self.WIDTH_MULTIPLIER, self.HEIGHT)
+
+            # increment next place to place rectangle
+            x_pos += s * self.WIDTH_MULTIPLIER
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     mainWin = MHDatabaseWindow()
     mainWin.show()
-
-sys.exit(app.exec_())
+    sys.exit(app.exec_())
