@@ -1,5 +1,5 @@
 # MHGUWeaponFilter
-An application written in Python that filters and displays the weapons of Monster Hunter Generations Ultimate based on the selected parameters. Currently does not support gunner weapons (Bow, Light Bowgun, and Heavy Bowgun).
+An application written in Python that filters and displays the weapons of Monster Hunter Generations Ultimate based on the selected parameters.
 
 ## Getting Started
 
@@ -22,8 +22,8 @@ Change the directory to folder and run `python3 pyqt_gui.py`
 * display which songs a hunting horn has
 * filter which charge a bow has by number
 * add arc shot type
-* add rapidfire/siege mode shots
-* add internal ammo
+* ~~add rapidfire/siege mode shots~~
+* ~~add internal ammo~~
 
 ## Acknowledgements
 GatheringHallStudios - Database was used from their [MHGenDatabase](https://github.com/gatheringhallstudios/MHGenDatabase/) project. 

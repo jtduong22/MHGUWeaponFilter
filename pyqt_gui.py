@@ -267,7 +267,7 @@ class MHDatabaseWindow(QMainWindow):
         # print(self.weapon_filter_layout.itemAt(2).widget())
         for c in range(self.weapon_filter_layout.count()):
             print(c)
-            child = self.weapon_filter_layout.itemAt(c).widget()
+            child = self.weapon_filter_layout.itemAt(c)
             print(type(child))
 
             if isinstance(child, QLayout):
@@ -297,7 +297,8 @@ class MHDatabaseWindow(QMainWindow):
                             break
 
             # parse Horn / Shots
-            if isinstance(child, CollapsibleWidget):
+            elif isinstance(child.widget(), CollapsibleWidget):
+                child = child.widget()
                 grid = child.get_item_at(0)
                 selected = 0
                 for c in range(grid.count()):
@@ -347,7 +348,7 @@ class MHDatabaseWindow(QMainWindow):
 
     def parse_table_item(self, item_type:str, item_index: int):
         cell = QTableWidgetItem()
-
+        print(item_type)
         # change background color to match sharpness
         if item_type == 'sharpness':
             if self.selected_weapon_type is PalicoWeapon:

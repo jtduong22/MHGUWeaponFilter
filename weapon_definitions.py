@@ -293,8 +293,8 @@ class Bow(HunterWeapon):
         return potential_coating
 
 class Gunner(HunterWeapon):
-    HEADERS = HunterWeapon.HEADERS[0:1] + HunterWeapon.HEADERS[4:] + ['recoil', 'reload speed', 'deviation', 'ammo', 'special ammo']
-    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS[0:1] + HunterWeapon.WEAPON_PARAMETERS[4:] + ['recoil', 'reload_speed', 'deviation', 'ammo', 'special_ammo']
+    HEADERS = HunterWeapon.HEADERS[0:2] + HunterWeapon.HEADERS[4:] + ['recoil', 'reload speed', 'deviation', 'ammo', 'special ammo']
+    WEAPON_PARAMETERS = HunterWeapon.WEAPON_PARAMETERS[0:2] + HunterWeapon.WEAPON_PARAMETERS[4:] + ['recoil', 'reload_speed', 'deviation', 'ammo', 'special_ammo']
     FILTERABLES = {x:HunterWeapon.FILTERABLES[x] for x in HunterWeapon.FILTERABLES.keys() if x != 'element' and x != 'element_attack'}
     CONTAINS = {'Shot Types':[], 'Special Ammo':[]}
 
