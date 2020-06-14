@@ -28,7 +28,7 @@ class CollapsibleWidget(QtWidgets.QWidget):
 
     def get_item_at(self, index: int) -> QtWidgets.QWidget:
         item = self._container_layout.itemAt(index)
-        print(type(item))
+
         if not isinstance(item, QtWidgets.QLayout):
             item = item.widget()
         return item

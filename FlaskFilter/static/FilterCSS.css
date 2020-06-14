@@ -1,0 +1,35 @@
+body {
+    background-color: whitesmoke;
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    /* font-family: Arial, Helvetica, sans-serif; */
+}
+
+table,
+th,
+td {
+  border: 1px solid #666;
+  border-collapse: collapse;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+.weapon_filter > * {
+    display: inline-block;
+    zoom: 1;
+    width: 49.5%;
+    text-align: center;
+}
+.weapon_filter > label {
+    text-align: right;
+    padding-right: 1%;
+}
+
+button {
+    width: 100%;
+    
+}
+
+fieldset {
+    padding-top: 5px;
+    padding-bottom: 5px;
+}

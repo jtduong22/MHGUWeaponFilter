@@ -274,11 +274,11 @@ class MHDatabaseWindow(QMainWindow):
                 # parse data
                 label = child.itemAt(0).widget()
                 combobox = child.itemAt(1).widget()
-                print(label.text())
+                # print(label.text())
 
                 # parse combobox
                 if isinstance(combobox, QComboBox):
-                    print(combobox.currentIndex())
+                    # print(combobox.currentIndex())
 
                     # order by
                     if label.text() == 'order by':
@@ -307,7 +307,7 @@ class MHDatabaseWindow(QMainWindow):
                         selected += pow(2,grid.count() - 1 - c)
                     # print(checkbox.text())
 
-                print(selected)
+                print(f"selected: {selected}")
                 if selected > 0:
                     db.add_filter(child.get_text(), selected)
 
@@ -348,7 +348,7 @@ class MHDatabaseWindow(QMainWindow):
 
     def parse_table_item(self, item_type:str, item_index: int):
         cell = QTableWidgetItem()
-        print(item_type)
+
         # change background color to match sharpness
         if item_type == 'sharpness':
             if self.selected_weapon_type is PalicoWeapon:
@@ -435,7 +435,6 @@ class MHDatabaseWindow(QMainWindow):
                 text = ''
                 rapid_shots = item_index.split('*')
                 for shot in rapid_shots:
-                    print(f"shot: {shot}")
                     if shot != '':
                         name, shot_count, percent, delay = shot.split(':')
                         if delay == '0':
