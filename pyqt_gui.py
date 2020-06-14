@@ -3,8 +3,8 @@ from PyQt5.QtGui import QColor, QPainter, QIcon, QFontDatabase, QPen, QBrush
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 
-from weapon_definitions import *
-from CollapsibleWidget import CollapsibleWidget
+from db_wrapper.weapon_definitions import *
+from pyqt_collapsable_widget import CollapsibleWidget
 
 class MHDatabaseWindow(QMainWindow):
 #### Class Constants ####
@@ -117,11 +117,6 @@ class MHDatabaseWindow(QMainWindow):
         return layout
 
     def create_contains_layout(self, content: list) -> QLayout:
-        # layout = QVBoxLayout(self)
-
-        # description_label = QLabel(f"{label_text}", self)
-        # layout.addWidget(description_label)
-
         # create new layout for checkmarks
         checkbox_layout = QGridLayout(self)
 
