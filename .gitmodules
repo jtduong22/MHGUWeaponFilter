@@ -1,3 +1,3 @@
-[submodule "pyqt-collapsable-widget"]
-	path = pyqt-collapsable-widget
-	url = https://github.com/jtduong22/pyqt-collapsable-widget.git
+[submodule "pyqt_collapsable_widget"]
+	path = pyqt_collapsable_widget
+	url = https://github.com/jtduong22/pyqt_collapsable_widget.git
